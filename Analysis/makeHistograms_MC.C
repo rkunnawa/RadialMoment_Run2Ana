@@ -64,7 +64,7 @@ const int nbins_pt_ana = sizeof(ptbins_ana)/sizeof(double)-1;
 double etabins_ana[] = {-3.0, -1.0, 1.0, 3.0};
 const int nbins_eta_ana = sizeof(etabins_ana)/sizeof(double)-1; 
 
-static const int trigValue = 5;
+static const int trigValue = 4;
 static const char trigName [trigValue][256] = {"HLT40","HLT60","HLT80","Combined"};
 
 // divide by bin width
@@ -92,31 +92,31 @@ float deltaphi(float phi1, float phi2)
   return TMath::Abs(dphi);
 }
 
-double pthatWeight(double pthat, double xsec){
-  // no of events in pthat = 15 = 882122
-  // no of events in pthat = 30 = 884958
-  // no of events in pthat = 50 = 961144
-  // no of events in pthat = 80 = 1461062
-  // no of events in pthat = 120 = 930335
-  // no of events in pthat = 170 = 869197
-  // no of events in pthat = 220 = 948601
-  // no of events in pthat = 280 = 1451845
-  // no of events in pthat = 370 = 1369736
-  double pthatWeight = 0.0;
-  const int nEventspthats[] = {882122, 884958, 961144,
-			       1461062, 930335, 869197,
-			       948601, 1451845, 1369736};
-  const int nPthats = 9;
-  int pthats[] = {15, 30, 50, 80, 120, 170, 220, 280, 370, 9999};
-  int eventPthat = 0;
-  for(int i = 0; i<9; ++i){
-    if(pthat > pthats[i] && pthat < pthats[i+1])
-      eventPthat = i;
-  }
-  pthatweight = (double)xsec/nEventspthats[eventPthat];
-  return pthatweight;
+// double pthatWeight(double pthat, double xsec){
+//   // no of events in pthat = 15 = 882122
+//   // no of events in pthat = 30 = 884958
+//   // no of events in pthat = 50 = 961144
+//   // no of events in pthat = 80 = 1461062
+//   // no of events in pthat = 120 = 930335
+//   // no of events in pthat = 170 = 869197
+//   // no of events in pthat = 220 = 948601
+//   // no of events in pthat = 280 = 1451845
+//   // no of events in pthat = 370 = 1369736
+//   double pthatWeight = 0.0;
+//   const int nEventspthats[] = {882122, 884958, 961144,
+// 			       1461062, 930335, 869197,
+// 			       948601, 1451845, 1369736};
+//   const int nPthats = 9;
+//   int pthats[] = {15, 30, 50, 80, 120, 170, 220, 280, 370, 9999};
+//   int eventPthat = 0;
+//   for(int i = 0; i<9; ++i){
+//     if(pthat > pthats[i] && pthat < pthats[i+1])
+//       eventPthat = i;
+//   }
+//   pthatWeight = (double)xsec/nEventspthats[eventPthat];
+//   return pthatWeight;
 
-}
+// }
 
 
 using namespace std;
@@ -143,80 +143,90 @@ void makeHistograms_MC(int startfile = 0,
 
   std::string infile_Forest;
 
-  double pthatBins2015[] = {15, 30, 50, 80, 2000};
-
-  infile_Forest = "filelist.txt";
+  infile_Forest = "pPb_8TeV_MCForests.txt";
   std::ifstream instr_Forest(infile_Forest.c_str(),std::ifstream::in);
-  std::string filename_Forest;
-  
+  std::string filename_Forest;  
+
   if(printDebug)cout<<"reading from "<<startfile<<" to "<<endfile<<endl;
-  
   for(int ifile = 0;ifile<startfile;ifile++){
     instr_Forest>>filename_Forest;
   }
 
-  const int N = 4; //6
-
-  TChain * jetpp[N];
-
+  const int N = 5; //6
+  TChain * jetTree[N];
+  
   string dir[N];
   dir[0] = "hltanalysis";
   dir[1] = "skimanalysis";
   dir[2] = Form("ak%s%d%sJetAnalyzer", algo.c_str(), radius, jetType.c_str());
   dir[3] = "hiEvtAnalyzer";
-  // dir[3] = "ppTrack";
-  // dir[4] = "runAnalyzer";
+  dir[4] = "runAnalyzer";
 
   string trees[N] = {
     "HltTree",
     "HltTree",
     "t",
-    "HiTree"
-    // "trackTree",
-    // "run"
-    // , "jetObjTree"
+    "HiTree",
+    "run"
   };
 
   for(int t = 0;t<N;t++){
-    jetpp[t] = new TChain(string(dir[t]+"/"+trees[t]).data());
+    jetTree[t] = new TChain(string(dir[t]+"/"+trees[t]).data());
   }//tree loop ends
 
   for(int ifile = startfile; ifile<endfile; ++ifile){
 
     instr_Forest>>filename_Forest;
 
-    jetpp[0]->Add(filename_Forest.c_str());
-    jetpp[1]->Add(filename_Forest.c_str());
-    jetpp[2]->Add(filename_Forest.c_str());
-    jetpp[3]->Add(filename_Forest.c_str());
-    // jetpp[4]->Add(filename_Forest.c_str());
-    
-    if(printDebug)cout << "Tree loaded  " << string(dir[0]+"/"+trees[0]).data() << endl;
-    if(printDebug)cout << "Entries : " << jetpp[0]->GetEntries() << endl;
-    if(printDebug)cout << "Tree loaded  " << string(dir[1]+"/"+trees[1]).data() << endl;
-    if(printDebug)cout << "Entries : " << jetpp[1]->GetEntries() << endl;
-    if(printDebug)cout << "Tree loaded  " << string(dir[2]+"/"+trees[2]).data() << endl;
-    if(printDebug)cout << "Entries : " << jetpp[2]->GetEntries() << endl;
-    if(printDebug)cout << "Tree loaded  " << string(dir[3]+"/"+trees[3]).data() << endl;
-    if(printDebug)cout << "Entries : " << jetpp[3]->GetEntries() << endl;
-    // if(printDebug)cout << "Tree loaded  " << string(dir[4]+"/"+trees[4]).data() << endl;
-    // if(printDebug)cout << "Entries : " << jetpp[4]->GetEntries() << endl;
-
+    for(int t = 0;t<N;t++){
+      jetTree[t]->Add(filename_Forest.c_str());    
+      if(printDebug)cout << "Tree loaded  " << string(dir[t]+"/"+trees[t]).data() << endl;
+      if(printDebug)cout << "Entries : " << jetTree[t]->GetEntries() << endl;
+    }
   }
   
-  jetpp[2]->AddFriend(jetpp[0]);
-  jetpp[2]->AddFriend(jetpp[1]);
-  jetpp[2]->AddFriend(jetpp[3]);
-  // jetpp[2]->AddFriend(jetpp[4]);
+  for(int i = 0; i<N; ++i)  
+    if(i!=2)
+      jetTree[2]->AddFriend(jetTree[i]);
   
-  // Forest files 
+  int jet40_F;
+  int jet60_F;
+  int jet80_F;
+  int jet40_p_F;
+  int jet60_p_F;
+  int jet80_p_F;
+  int jet40_l1_F;
+  int jet60_l1_F;
+  int jet80_l1_F;
+  int jet40_p_l1_F;
+  int jet60_p_l1_F;
+  int jet80_p_l1_F;
+  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet40_Eta5p1_v2",&jet40_F);
+  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet40_Eta5p1_v2_Prescl",&jet40_p_F);
+  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet60_Eta5p1_v2",&jet60_F);
+  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet60_Eta5p1_v2_Prescl",&jet60_p_F);
+  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet80_Eta5p1_v2",&jet80_F);
+  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet80_Eta5p1_v2_Prescl",&jet80_p_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet16_BptxAND_Final",&jet40_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet16_BptxAND_Prescl",&jet40_p_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet24_BptxAND_Final",&jet60_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet24_BptxAND_Prescl",&jet60_p_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet36_BptxAND_Final",&jet80_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet36_BptxAND_Prescl",&jet80_p_l1_F);
+  
+  int pprimaryvertexFilter_F;
+  int pVertexFilterCutGplus_F;
+  int pHBHENoiseFilter_F;
+  jetTree[1]->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&pHBHENoiseFilter_F);
+  jetTree[1]->SetBranchAddress("pPAprimaryVertexFilter",&pprimaryvertexFilter_F);
+  jetTree[1]->SetBranchAddress("pVertexFilterCutGplus",&pVertexFilterCutGplus_F);
+  
   int nref_F;
   float pt_F[1000];
-  float refpt_F[1000];
-  float refeta_F[1000];
   float rawpt_F[1000];
   float eta_F[1000];
   float phi_F[1000];
+  float m_F[1000];
   float chMax_F[1000];
   int chN_F[1000];
   int neN_F[1000];
@@ -227,870 +237,283 @@ void makeHistograms_MC(int startfile = 0,
   float trkSum_F[1000];
   float phMax_F[1000];
   float neMax_F[1000];
-
   float chHardMax_F[1000];
   float trkHardMax_F[1000];
   float chHardSum_F[1000];
   float phHardSum_F[1000];
   float trkHardSum_F[1000];
   float phHardMax_F[1000];
-
   float eMax_F[1000];
   float muMax_F[1000];
   float eSum_F[1000];
   float muSum_F[1000];
   float jtpu_F[1000];
+  float refpt_F[1000];
+  float refeta_F[1000];
   int subid_F[1000];
   float refdrjt_F[1000];
   int refparton_F[1000];
-
   float pthat_F;
-  int jet40_F;
-  int jet60_F;
-  int jet80_F;
-  int jet100_F;
-  int jet40_p_F;
-  int jet60_p_F;
-  int jet80_p_F;
-  int jet100_p_F;
-  int evt_F;
-  int run_F;
-  int lumi_F;
-  // int pcollisionEventSelection_F;
+  jetTree[2]->SetBranchAddress("nref",&nref_F);
+  jetTree[2]->SetBranchAddress("subid",&subid_F);
+  jetTree[2]->SetBranchAddress("refdrjt",refdrjt_F);
+  jetTree[2]->SetBranchAddress("refparton_flavor",refparton_F);
+  jetTree[2]->SetBranchAddress("refpt", &refpt_F);
+  jetTree[2]->SetBranchAddress("pthat", &pthat_F);
+  jetTree[2]->SetBranchAddress("refeta", &refeta_F);
+  jetTree[2]->SetBranchAddress("jtpt",&pt_F);
+  jetTree[2]->SetBranchAddress("jteta",&eta_F);
+  jetTree[2]->SetBranchAddress("jtphi",&phi_F);
+  jetTree[2]->SetBranchAddress("rawpt",&rawpt_F);
+  jetTree[2]->SetBranchAddress("jtpu",&jtpu_F);
+  jetTree[2]->SetBranchAddress("jtm",&m_F);
+  jetTree[2]->SetBranchAddress("chargedMax",&chMax_F);
+  jetTree[2]->SetBranchAddress("chargedSum",&chSum_F);
+  jetTree[2]->SetBranchAddress("chargedN",&chN_F);
+  jetTree[2]->SetBranchAddress("neutralN",&neN_F);
+  //jetTree[2]->SetBranchAddress("chargedHardMax",&chMax_F);
+  jetTree[2]->SetBranchAddress("chargedHardSum",&chSum_F);
+  jetTree[2]->SetBranchAddress("trackMax",&trkMax_F);
+  jetTree[2]->SetBranchAddress("trackSum",&trkSum_F);
+  //jetTree[2]->SetBranchAddress("trackHardMax",&trkMax_F);
+  jetTree[2]->SetBranchAddress("trackHardSum",&trkSum_F);
+  jetTree[2]->SetBranchAddress("photonMax",&phMax_F);
+  jetTree[2]->SetBranchAddress("photonSum",&phSum_F);
+  //jetTree[2]->SetBranchAddress("photonHardMax",&phMax_F);
+  jetTree[2]->SetBranchAddress("photonHardSum",&phSum_F);
+  jetTree[2]->SetBranchAddress("neutralMax",&neMax_F);
+  jetTree[2]->SetBranchAddress("neutralSum",&neSum_F);
+  jetTree[2]->SetBranchAddress("eSum",&eSum_F);
+  jetTree[2]->SetBranchAddress("eMax",&eMax_F);
+  jetTree[2]->SetBranchAddress("muSum",&muSum_F);
+  jetTree[2]->SetBranchAddress("muMax",&muMax_F);
+  //! pf jet variables
+  float jtPfCHF_F[1000];
+  float jtPfNHF_F[1000];
+  float jtPfCEF_F[1000];
+  float jtPfNEF_F[1000];
+  float jtPfMUF_F[1000];
+  float jtPfCHM_F[1000];
+  float jtPfNHM_F[1000];
+  float jtPfCEM_F[1000];
+  float jtPfNEM_F[1000];
+  float jtPfMUM_F[1000];
+  jetTree[2]->SetBranchAddress("jtPfCHF",&jtPfCHF_F);
+  jetTree[2]->SetBranchAddress("jtPfNHF",&jtPfNHF_F);
+  jetTree[2]->SetBranchAddress("jtPfCEF",&jtPfCEF_F);
+  jetTree[2]->SetBranchAddress("jtPfNEF",&jtPfNEF_F);
+  jetTree[2]->SetBranchAddress("jtPfMUF",&jtPfMUF_F);
+  jetTree[2]->SetBranchAddress("jtPfCHM",&jtPfCHM_F);
+  jetTree[2]->SetBranchAddress("jtPfNHM",&jtPfNHM_F);
+  jetTree[2]->SetBranchAddress("jtPfCEM",&jtPfCEM_F);
+  jetTree[2]->SetBranchAddress("jtPfNEM",&jtPfNEM_F);
+  jetTree[2]->SetBranchAddress("jtPfMUM",&jtPfMUM_F);
 
   Float_t vz_F;
-  int pprimaryvertexFilter_F;
-  int pVertexFilterCutGplus_F;
-  int pHBHENoiseFilter_F;
-  // int nVtx;
-  // float vz_F[100];
-  // float vx_F[100];
-  // float vy_F[100];
-  // int nTrk;
-  
-  // jetpp[3]->SetBranchAddress("nTrk",&nTrk);
-  // jetpp[3]->SetBranchAddress("nVtx",&nVtx);
-  // jetpp[3]->SetBranchAddress("zVtx",vz_F);
-  // jetpp[3]->SetBranchAddress("yVtx",vy_F);
-  // jetpp[3]->SetBranchAddress("xVtx",vx_F);
-  
-  // jetpp[4]->SetBranchAddress("evt",&evt_F);
-  // jetpp[4]->SetBranchAddress("run",&run_F);
-  // jetpp[4]->SetBranchAddress("lumi",&lumi_F);
-  jetpp[3]->SetBranchAddress("vz",&vz_F);
-  jetpp[1]->SetBranchAddress("HBHENoiseFilterResultRun2Loose",&pHBHENoiseFilter_F);
-  jetpp[1]->SetBranchAddress("pPAprimaryVertexFilter",&pprimaryvertexFilter_F);
-  jetpp[1]->SetBranchAddress("pVertexFilterCutGplus",&pVertexFilterCutGplus_F);
-  
-  jetpp[2]->SetBranchAddress("nref",&nref_F);
-  jetpp[2]->SetBranchAddress("subid",&subid_F);
-  jetpp[2]->SetBranchAddress("refdrjt",refdrjt_F);
-  jetpp[2]->SetBranchAddress("refparton_flavor",refparton_F);
-  jetpp[2]->SetBranchAddress("refpt", &refpt_F);
-  jetpp[2]->SetBranchAddress("refeta", &refeta_F);
-  jetpp[2]->SetBranchAddress("jtpt",&pt_F);
-  jetpp[2]->SetBranchAddress("jteta",&eta_F);
-  jetpp[2]->SetBranchAddress("jtphi",&phi_F);
-  jetpp[2]->SetBranchAddress("rawpt",&rawpt_F);
-  jetpp[2]->SetBranchAddress("jtpu",&jtpu_F);
-  jetpp[2]->SetBranchAddress("pthat", & pthat_F);
-  jetpp[2]->SetBranchAddress("chargedMax",&chMax_F);
-  jetpp[2]->SetBranchAddress("chargedSum",&chSum_F);
-  jetpp[2]->SetBranchAddress("chargedN",&chN_F);
-  jetpp[2]->SetBranchAddress("neutralN",&neN_F);
-  //jetpp[2]->SetBranchAddress("chargedHardMax",&chMax_F);
-  jetpp[2]->SetBranchAddress("chargedHardSum",&chSum_F);
-  jetpp[2]->SetBranchAddress("trackMax",&trkMax_F);
-  jetpp[2]->SetBranchAddress("trackSum",&trkSum_F);
-  //jetpp[2]->SetBranchAddress("trackHardMax",&trkMax_F);
-  jetpp[2]->SetBranchAddress("trackHardSum",&trkSum_F);
-  jetpp[2]->SetBranchAddress("photonMax",&phMax_F);
-  jetpp[2]->SetBranchAddress("photonSum",&phSum_F);
-  //jetpp[2]->SetBranchAddress("photonHardMax",&phMax_F);
-  jetpp[2]->SetBranchAddress("photonHardSum",&phSum_F);
-  jetpp[2]->SetBranchAddress("neutralMax",&neMax_F);
-  jetpp[2]->SetBranchAddress("neutralSum",&neSum_F);
+  ULong64_t evt_F;
+  UInt_t run_F;
+  UInt_t lumi_F;
+  int hiBin_F;
+  int hiNpix_F;
+  int hiNtracks_F;
+  float hiHF_F;
+  float hiHFplus_F;
+  float hiHFminus_F;
+  float hiZDC_F;
+  float hiZDCplus_F;
+  float hiZDCminus_F;
+  float hiHFhit_F;
+  float hiHFhitplus_F;
+  float hiHFhitminus_F;
+  jetTree[3]->SetBranchAddress("evt",&evt_F);
+  jetTree[3]->SetBranchAddress("run",&run_F);
+  jetTree[3]->SetBranchAddress("lumi",&lumi_F);
+  jetTree[3]->SetBranchAddress("vz",&vz_F);
+  jetTree[3]->SetBranchAddress("hiBin",&hiBin_F);
+  jetTree[3]->SetBranchAddress("hiHF",&hiHF_F);
+  jetTree[3]->SetBranchAddress("hiHFplus",&hiHFplus_F);
+  jetTree[3]->SetBranchAddress("hiHFminus",&hiHFminus_F);
+  jetTree[3]->SetBranchAddress("hiZDC",&hiZDC_F);
+  jetTree[3]->SetBranchAddress("hiZDCplus",&hiZDCplus_F);
+  jetTree[3]->SetBranchAddress("hiZDCminus",&hiZDCminus_F);
+  jetTree[3]->SetBranchAddress("hiHFhit",&hiHFhit_F);
+  jetTree[3]->SetBranchAddress("hiHFhitPlus",&hiHFhitplus_F);
+  jetTree[3]->SetBranchAddress("hiHFhitMinus",&hiHFhitminus_F);
+  jetTree[3]->SetBranchAddress("hiNpix",&hiNpix_F);
+  jetTree[3]->SetBranchAddress("hiNtracks",&hiNtracks_F);
 
-  jetpp[2]->SetBranchAddress("eSum",&eSum_F);
-  jetpp[2]->SetBranchAddress("eMax",&eMax_F);
-  jetpp[2]->SetBranchAddress("muSum",&muSum_F);
-  jetpp[2]->SetBranchAddress("muMax",&muMax_F);
-  // jetpp[0]->SetBranchAddress("HLT_AK4CaloJet40_Eta5p1_v1",&jet40_F);
-  // jetpp[0]->SetBranchAddress("HLT_AK4CaloJet40_Eta5p1_v1_Prescl",&jet40_p_F);
-  // jetpp[0]->SetBranchAddress("HLT_AK4CaloJet60_Eta5p1_v1",&jet60_F);
-  // jetpp[0]->SetBranchAddress("HLT_AK4CaloJet60_Eta5p1_v1_Prescl",&jet60_p_F);
-  // jetpp[0]->SetBranchAddress("HLT_AK4CaloJet80_Eta5p1_v1",&jet80_F);
-  // jetpp[0]->SetBranchAddress("HLT_AK4CaloJet80_Eta5p1_v1_Prescl",&jet80_p_F);
-  // jetpp[0]->SetBranchAddress("HLT_AK4CaloJet100_Eta5p1_v1",&jet100_F);
-  // jetpp[0]->SetBranchAddress("HLT_AK4CaloJet100_Eta5p1_v1_Prescl",&jet100_p_F);
-
-  Float_t pthatweight;
-  // // int evt_w;
-  // // int lumi_w;
-  //float vz_w;
-
-  // jetpp[4]->SetBranchAddress("xsec",&pthatweight);
+  Float_t xsec_F;
+  jetTree[4]->SetBranchAddress("xsec",&xsec_F);
   
   TFile *fout = new TFile(kfoutname.c_str(),"RECREATE");
   fout->cd();
   
-  // TH1F *hpp_Jet100_gen,*hpp_Jet100_reco;
-  // TH1F *hpp_Jet80_gen,*hpp_Jet80_reco;
-  // TH1F *hpp_Jet60_gen,*hpp_Jet60_reco;
-  // TH1F *hpp_Jet40_gen,*hpp_Jet40_reco;
-  // TH1F *hpp_JetComb_gen,*hpp_JetComb_reco;
-
-  // TH1F *hpp_anaBin_Jet100_gen,*hpp_anaBin_Jet100_reco;
-  // TH1F *hpp_anaBin_Jet80_gen,*hpp_anaBin_Jet80_reco;
-  // TH1F *hpp_anaBin_Jet60_gen,*hpp_anaBin_Jet60_reco;
-  // TH1F *hpp_anaBin_Jet40_gen,*hpp_anaBin_Jet40_reco;
-  // TH1F *hpp_anaBin_JetComb_gen,*hpp_anaBin_JetComb_reco;
+  //! Declare the output histograms to compare data with MC.
+  //! Event histograms 
+  TH1F * hVz = new TH1F("hVz","",100, -20, 20);
+  TH1F * hhiBin = new TH1F("hhiBin","",200, 0, 200);
+  TH1F * hNpix = new TH1F("hNpix","", 100, 0, 1200);
+  TH1F * hHF = new TH1F("hHF","",500, 0, 500);
+  TH1F * hHFplus = new TH1F("hHFplus","",500, 0, 500);
+  TH1F * hHFminus = new TH1F("hHFminus","",500, 0, 500);
+  TH1F * hZDC = new TH1F("hZDC","",500, 0, 500);
+  TH1F * hZDCplus = new TH1F("hZDCplus","",500, 0, 500);
+  TH1F * hZDCminus = new TH1F("hZDCminus","",500, 0, 500);
+  TH1F * hHFhit = new TH1F("hHFhit","",200, 0, 8000);
+  TH1F * hHFhitplus = new TH1F("hHFhitplus","",200, 0, 8000);
+  TH1F * hHFhitminus = new TH1F("hHFhitminus","",200, 0, 8000);
+  TH1F * hNtracks = new TH1F("hNtracks","", 200, 0, 200);
+  TH1F * hpthat = new TH1F("hpthat", "", 500, 0, 1000);
+  //! Jet histograms
+  TH1F * hjtpt = new TH1F("hjtpt","", 500, 0, 1000);
+  TH1F * hrefpt = new TH1F("hrefpt","",500, 0, 1000);
+  TH1F * hjteta = new TH1F("hjteta","", 100, -5, 5);
+  TH1F * hjtphi = new TH1F("hjtphi","", 100, -4, 4);
+  TH1F * hjtm = new TH1F("hjtm","", 50, 0, 50);
+  TH1F * hCHF = new TH1F("hCHF","", 50, 0, 1.5);
+  TH1F * hNHF = new TH1F("hNHF","", 50, 0, 1.5);
+  TH1F * hCEF = new TH1F("hCEF","", 50, 0, 1.5);
+  TH1F * hNEF = new TH1F("hNEF","", 50, 0, 1.5);
+  TH1F * hMUF = new TH1F("hMUF","", 50, 0, 1.5);
+  TH1F * hCHM = new TH1F("hCHM","", 70, 0, 70);
+  TH1F * hNHM = new TH1F("hNHM","", 70, 0, 70);
+  TH1F * hCEM = new TH1F("hCEM","", 70, 0, 70);
+  TH1F * hNEM = new TH1F("hNEM","", 70, 0, 70);
+  TH1F * hMUM = new TH1F("hMUM","", 70, 0, 70);
+  TH1F * hAj = new TH1F("hAj","",50, 0, 1);
+  //! 2D histograms with Aj vs different centrality variables
+  TH2F * hAjvshiBin = new TH2F("hAjvshiBin","", 200, 0, 200, 50, 0, 1);
+  TH2F * hAjvsNpix = new TH2F("hAjvsNpix","", 100, 0, 1200, 50, 0, 1);
+  TH2F * hAjvsHF = new TH2F("hAjvsHF","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsHFplus = new TH2F("hAjvsHFplus","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsHFminus = new TH2F("hAjvsHFminus","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsZDC = new TH2F("hAjvsZDC","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsZDCplus = new TH2F("hAjvsZDCplus","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsZDCminus = new TH2F("hAjvsZDCminus","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsHFhit = new TH2F("hAjvsHFhit","", 200, 0, 8000, 50, 0, 1);
+  TH2F * hAjvsHFhitplus = new TH2F("hAjvsHFhitplus","", 200, 0, 8000, 50, 0, 1);
+  TH2F * hAjvsHFhitminus = new TH2F("hAjvsHFhitminus","", 200, 0, 8000, 50, 0, 1);
+  TH2F * hAjvsNtracks = new TH2F("hAjvsNtracks","", 200, 0, 200, 50, 0, 1);
   
-  TH1F *hpp_gen,*hpp_reco;
-  // TH2F *hpp_matrix;
-  // TH2F *hpp_mcclosure_matrix;
-  // TH1F *hpp_mcclosure_data;
-  // TH1F *hpp_mcclosure_gen;
-  
-  // TH2F *hpp_matrix_HLT;
-  // TH2F *hpp_Trans_matrix_HLT;
-  // TH2F *hpp_anaBin_matrix_HLT;
-  // TH2F *hpp_anaBin_Trans_matrix_HLT;
-  // TH2F *hpp_mcclosure_matrix_HLT;
-  // TH2F *hpp_mcclosure_Trans_matrix_HLT;
-  // TH2F *hpp_anaBin_mcclosure_matrix_HLT;
-  // TH2F *hpp_anaBin_mcclosure_Trans_matrix_HLT;
-
-  // TH2F *hpp_matrix_HLT_Jet80;
-  // TH2F *hpp_Trans_matrix_HLT_Jet80;
-  // TH2F *hpp_anaBin_matrix_HLT_Jet80;
-  // TH2F *hpp_anaBin_Trans_matrix_HLT_Jet80;
-  // TH2F *hpp_mcclosure_matrix_HLT_Jet80;
-  // TH2F *hpp_mcclosure_Trans_matrix_HLT_Jet80;
-  // TH2F *hpp_anaBin_mcclosure_matrix_HLT_Jet80;
-  // TH2F *hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet80;
-
-  // TH2F *hpp_matrix_HLT_Jet60;
-  // TH2F *hpp_Trans_matrix_HLT_Jet60;
-  // TH2F *hpp_anaBin_matrix_HLT_Jet60;
-  // TH2F *hpp_anaBin_Trans_matrix_HLT_Jet60;
-  // TH2F *hpp_mcclosure_matrix_HLT_Jet60;
-  // TH2F *hpp_mcclosure_Trans_matrix_HLT_Jet60;
-  // TH2F *hpp_anaBin_mcclosure_matrix_HLT_Jet60;
-  // TH2F *hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet60;
-
-  // TH2F *hpp_matrix_HLT_Jet40;
-  // TH2F *hpp_Trans_matrix_HLT_Jet40;
-  // TH2F *hpp_anaBin_matrix_HLT_Jet40;
-  // TH2F *hpp_anaBin_Trans_matrix_HLT_Jet40;
-  // TH2F *hpp_mcclosure_matrix_HLT_Jet40;
-  // TH2F *hpp_mcclosure_Trans_matrix_HLT_Jet40;
-  // TH2F *hpp_anaBin_mcclosure_matrix_HLT_Jet40;
-  // TH2F *hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet40;
-
-  // TH2F * hpp_Trans_matrix_HLT_GenSmear;
-  // //TH2F * hpp_Trans_matrix_HLT_gen2pSmear;
-  // TH2F * hpp_Trans_matrix_HLT_RecoSmear;
-  // TH2F * hpp_Trans_matrix_HLT_BothSmear;
-
-  // TH2F * hpp_matrix_HLT_GenSmear;
-  // //TH2F * hpp_matrix_HLT_gen2pSmear;
-  // TH2F * hpp_matrix_HLT_RecoSmear;
-  // TH2F * hpp_matrix_HLT_BothSmear;
-  
-  //TH2F *hpp_response;
-  // TH1F *hpp_mcclosure_JetComb_data;
-  // TH1F *hpp_mcclosure_data_train;
-  // TH1F *hpp_mcclosure_JetComb_data_train;
-  // TH1F *hpp_mcclosure_Jet80_data_train;
-  // TH1F *hpp_mcclosure_Jet60_data_train;
-  // TH1F *hpp_mcclosure_Jet40_data_train;
-  // TH1F *hpp_mcclosure_Jet80_data;
-  // TH1F *hpp_mcclosure_Jet60_data;
-  // TH1F *hpp_mcclosure_Jet40_data;
-  // TH1F *hpp_mcclosure_JetComb_gen;
-  // TH1F *hpp_mcclosure_Jet80_gen;
-  // TH1F *hpp_mcclosure_Jet60_gen;
-  // TH1F *hpp_mcclosure_Jet40_gen;
-
-  TH1F * hpthat = new TH1F("hpthat","",1000,0,1000);
-
-  // macros for quark vs gluon uncertainty from the MC.
-  // TH1F * hpp_quark_Jet80_gen;
-  // TH1F * hpp_quark_Jet60_gen;
-  // TH1F * hpp_quark_Jet40_gen;
-  // TH1F * hpp_quark_JetComb_gen;
-  // TH1F * hpp_quark_Jet80_reco;
-  // TH1F * hpp_quark_Jet60_reco;
-  // TH1F * hpp_quark_Jet40_reco;
-  // TH1F * hpp_quark_JetComb_reco;
-
-  // TH1F * hpp_gluon_Jet80_gen;
-  // TH1F * hpp_gluon_Jet60_gen;
-  // TH1F * hpp_gluon_Jet40_gen;
-  // TH1F * hpp_gluon_JetComb_gen;
-  // TH1F * hpp_gluon_Jet80_reco;
-  // TH1F * hpp_gluon_Jet60_reco;
-  // TH1F * hpp_gluon_Jet40_reco;
-  // TH1F * hpp_gluon_JetComb_reco;
-
-  // TH1F * hpp_mcclosure_quark_Jet80_gen;
-  // TH1F * hpp_mcclosure_quark_Jet60_gen;
-  // TH1F * hpp_mcclosure_quark_Jet40_gen;
-  // TH1F * hpp_mcclosure_quark_JetComb_gen;
-  // TH1F * hpp_mcclosure_quark_Jet80_reco;
-  // TH1F * hpp_mcclosure_quark_Jet60_reco;
-  // TH1F * hpp_mcclosure_quark_Jet40_reco;
-  // TH1F * hpp_mcclosure_quark_JetComb_reco;
-
-  // TH1F * hpp_mcclosure_gluon_Jet80_gen;
-  // TH1F * hpp_mcclosure_gluon_Jet60_gen;
-  // TH1F * hpp_mcclosure_gluon_Jet40_gen;
-  // TH1F * hpp_mcclosure_gluon_JetComb_gen;
-  // TH1F * hpp_mcclosure_gluon_Jet80_reco;
-  // TH1F * hpp_mcclosure_gluon_Jet60_reco;
-  // TH1F * hpp_mcclosure_gluon_Jet40_reco;
-  // TH1F * hpp_mcclosure_gluon_JetComb_reco;
-  
-  // TH2F * hpp_Trans_matrix_quark_HLT;
-  // TH2F * hpp_Trans_matrix_gluon_HLT;
-
-  // TH2F * hpp_mcclosure_Trans_matrix_quark_HLT;
-  // TH2F * hpp_mcclosure_Trans_matrix_gluon_HLT;  
-
-  // hpp_quark_Jet80_gen = new TH1F(Form("hpp_quark_Jet80_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_quark_Jet60_gen = new TH1F(Form("hpp_quark_Jet60_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_quark_Jet40_gen = new TH1F(Form("hpp_quark_Jet40_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_quark_JetComb_gen = new TH1F(Form("hpp_quark_JetComb_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_quark_Jet80_reco = new TH1F(Form("hpp_quark_Jet80_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_quark_Jet60_reco = new TH1F(Form("hpp_quark_Jet60_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_quark_Jet40_reco = new TH1F(Form("hpp_quark_Jet40_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_quark_JetComb_reco = new TH1F(Form("hpp_quark_JetComb_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_gluon_Jet80_gen = new TH1F(Form("hpp_gluon_Jet80_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_gluon_Jet60_gen = new TH1F(Form("hpp_gluon_Jet60_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_gluon_Jet40_gen = new TH1F(Form("hpp_gluon_Jet40_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_gluon_JetComb_gen = new TH1F(Form("hpp_gluon_JetComb_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_gluon_Jet80_reco = new TH1F(Form("hpp_gluon_Jet80_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_gluon_Jet60_reco = new TH1F(Form("hpp_gluon_Jet60_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_gluon_Jet40_reco = new TH1F(Form("hpp_gluon_Jet40_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_gluon_JetComb_reco = new TH1F(Form("hpp_gluon_JetComb_reco_R%d", radius),"",1000, 0, 1000);
-
-  // hpp_mcclosure_quark_Jet80_gen = new TH1F(Form("hpp_mcclosure_quark_Jet80_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_quark_Jet60_gen = new TH1F(Form("hpp_mcclosure_quark_Jet60_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_quark_Jet40_gen = new TH1F(Form("hpp_mcclosure_quark_Jet40_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_quark_JetComb_gen = new TH1F(Form("hpp_mcclosure_quark_JetComb_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_quark_Jet80_reco = new TH1F(Form("hpp_mcclosure_quark_Jet80_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_quark_Jet60_reco = new TH1F(Form("hpp_mcclosure_quark_Jet60_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_quark_Jet40_reco = new TH1F(Form("hpp_mcclosure_quark_Jet40_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_quark_JetComb_reco = new TH1F(Form("hpp_mcclosure_quark_JetComb_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_gluon_Jet80_gen = new TH1F(Form("hpp_mcclosure_gluon_Jet80_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_gluon_Jet60_gen = new TH1F(Form("hpp_mcclosure_gluon_Jet60_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_gluon_Jet40_gen = new TH1F(Form("hpp_mcclosure_gluon_Jet40_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_gluon_JetComb_gen = new TH1F(Form("hpp_mcclosure_gluon_JetComb_gen_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_gluon_Jet80_reco = new TH1F(Form("hpp_mcclosure_gluon_Jet80_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_gluon_Jet60_reco = new TH1F(Form("hpp_mcclosure_gluon_Jet60_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_gluon_Jet40_reco = new TH1F(Form("hpp_mcclosure_gluon_Jet40_reco_R%d", radius),"",1000, 0, 1000);
-  // hpp_mcclosure_gluon_JetComb_reco = new TH1F(Form("hpp_mcclosure_gluon_JetComb_reco_R%d", radius),"",1000, 0, 1000);
-
-  // hpp_Trans_matrix_quark_HLT = new TH2F(Form("hpp_Trans_matrix_quark_HLT_R%d",radius),"",1000, 0, 1000, 1000, 0, 1000);
-  // hpp_Trans_matrix_gluon_HLT = new TH2F(Form("hpp_Trans_matrix_gluon_HLT_R%d",radius),"",1000, 0, 1000, 1000, 0, 1000);
-  // hpp_mcclosure_Trans_matrix_quark_HLT = new TH2F(Form("hpp_mcclosure_Trans_matrix_quark_HLT_R%d",radius),"",1000, 0, 1000, 1000, 0, 1000);
-  // hpp_mcclosure_Trans_matrix_gluon_HLT = new TH2F(Form("hpp_mcclosure_Trans_matrix_gluon_HLT_R%d",radius),"",1000, 0, 1000, 1000, 0, 1000);
-  
-
-  // hpp_Trans_matrix_HLT = new TH2F(Form("hpp_Trans_matrix_HLT_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),1000, 0, 1000, 1000, 0, 1000);
-  // hpp_Trans_matrix_HLT_GenSmear = new TH2F(Form("hpp_Trans_matrix_HLT_GenSmear_R%d_%s", radius, etaWidth),"",1000, 0, 1000, 1000, 0, 1000);
-  // hpp_Trans_matrix_HLT_RecoSmear = new TH2F(Form("hpp_Trans_matrix_HLT_RecoSmear_R%d_%s", radius, etaWidth),"",1000, 0, 1000, 1000, 0, 1000);
-  // hpp_Trans_matrix_HLT_BothSmear = new TH2F(Form("hpp_Trans_matrix_HLT_BothSmear_R%d_%s", radius, etaWidth),"",1000, 0, 1000, 1000, 0, 1000);
-  // //hpp_Trans_matrix_HLT_gen2pSmear = new TH2F(Form("hpp_Trans_matrix_HLT_gen2pSmear_R%d_%s", radius, etaWidth),"",1000, 0, 1000, 1000, 0, 1000);
-
-  // hpp_matrix_HLT_GenSmear = new TH2F(Form("hpp_matrix_HLT_GenSmear_R%d_%s", radius, etaWidth),"",1000, 0, 1000, 1000, 0, 1000);
-  // hpp_matrix_HLT_RecoSmear = new TH2F(Form("hpp_matrix_HLT_RecoSmear_R%d_%s", radius, etaWidth),"",1000, 0, 1000, 1000, 0, 1000);
-  // hpp_matrix_HLT_BothSmear = new TH2F(Form("hpp_matrix_HLT_BothSmear_R%d_%s", radius, etaWidth),"",1000, 0, 1000, 1000, 0, 1000);
-  // //hpp_matrix_HLT_gen2pSmear = new TH2F(Form("hpp_matrix_HLT_gen2pSmear_R%d_%s", radius, etaWidth),"",1000, 0, 1000, 1000, 0, 1000);
-  
-  
-  hpp_gen = new TH1F(Form("hpp_gen_R%d_%s",radius,etaWidth),Form("Gen refpt R%d %s ",radius,etaWidth),1000,0,1000);
-  //cout<<"A"<<endl;
-  hpp_reco = new TH1F(Form("hpp_reco_R%d_%s",radius,etaWidth),Form("Reco jtpt R%d %s ",radius,etaWidth),1000,0,1000);
-  //cout<<"B"<<endl;
-  // hpp_matrix = new TH2F(Form("hpp_matrix_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt R%d %s ; reco pT; gen pT",radius,etaWidth),1000,0,1000,1000,0,1000);
-
-  // hpp_matrix_HLT = new TH2F(Form("hpp_matrix_HLT_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),1000,0,1000,1000,0,1000);
-  // hpp_anaBin_matrix_HLT = new TH2F(Form("hpp_anaBin_matrix_HLT_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_anaBin_Trans_matrix_HLT = new TH2F(Form("hpp_anaBin_Trans_matrix_HLT_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-
-  // hpp_matrix_HLT_Jet80 = new TH2F(Form("hpp_matrix_HLT_Jet80_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),1000,0,1000,1000,0,1000);
-  // hpp_Trans_matrix_HLT_Jet80 = new TH2F(Form("hpp_Trans_matrix_HLT_Jet80_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),1000,0,1000,1000,0,1000);
-  // hpp_anaBin_matrix_HLT_Jet80 = new TH2F(Form("hpp_anaBin_matrix_HLT_Jet80_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_anaBin_Trans_matrix_HLT_Jet80 = new TH2F(Form("hpp_anaBin_Trans_matrix_HLT_Jet80_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-
-  // hpp_matrix_HLT_Jet60 = new TH2F(Form("hpp_matrix_HLT_Jet60_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),1000,0,1000,1000,0,1000);
-  // hpp_Trans_matrix_HLT_Jet60 = new TH2F(Form("hpp_Trans_matrix_HLT_Jet60_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),1000,0,1000,1000,0,1000);
-  // hpp_anaBin_matrix_HLT_Jet60 = new TH2F(Form("hpp_anaBin_matrix_HLT_Jet60_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_anaBin_Trans_matrix_HLT_Jet60 = new TH2F(Form("hpp_anaBin_Trans_matrix_HLT_Jet60_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-
-  // hpp_matrix_HLT_Jet40 = new TH2F(Form("hpp_matrix_HLT_Jet40_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),1000,0,1000,1000,0,1000);
-  // hpp_Trans_matrix_HLT_Jet40 = new TH2F(Form("hpp_Trans_matrix_HLT_Jet40_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),1000,0,1000,1000,0,1000);
-  // hpp_anaBin_matrix_HLT_Jet40 = new TH2F(Form("hpp_anaBin_matrix_HLT_Jet40_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_anaBin_Trans_matrix_HLT_Jet40 = new TH2F(Form("hpp_anaBin_Trans_matrix_HLT_Jet40_R%d_%s",radius,etaWidth),Form("Matrix refpt jtpt from trigger addition R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-
-
-  // hpp_JetComb_gen = new TH1F(Form("hpp_JetComb_gen_R%d_%s",radius,etaWidth),Form("Gen refpt from HLT trigger combined R%d %s ",radius,etaWidth),1000,0,1000);
-  // hpp_JetComb_reco = new TH1F(Form("hpp_JetComb_reco_R%d_%s",radius,etaWidth),Form("reco jtpt from HLT trigger combined R%d %s ",radius,etaWidth),1000,0,1000);
-  // hpp_Jet80_gen = new TH1F(Form("hpp_Jet80_gen_R%d_%s",radius,etaWidth),Form("Gen refpt from Jet80 trigger R%d %s ",radius,etaWidth),1000,0,1000);
-  // hpp_Jet80_reco = new TH1F(Form("hpp_Jet80_reco_R%d_%s",radius,etaWidth),Form("reco jtpt from Jet80 trigger R%d %s ",radius,etaWidth),1000,0,1000);
-  // hpp_Jet60_gen = new TH1F(Form("hpp_Jet60_gen_R%d_%s",radius,etaWidth),Form("Gen refpt from Jet60 && !Jet80 trigger R%d %s ",radius,etaWidth),1000,0,1000);
-  // hpp_Jet60_reco = new TH1F(Form("hpp_Jet60_reco_R%d_%s",radius,etaWidth),Form("reco jtpt from Jet60 && !Jet80 trigger R%d %s ",radius,etaWidth),1000,0,1000);
-  // hpp_Jet40_gen = new TH1F(Form("hpp_Jet40_gen_R%d_%s",radius,etaWidth),Form("Gen refpt from Jet40 && !Jet60 && !Jet80 trigger R%d %s ",radius,etaWidth),1000,0,1000);
-  // hpp_Jet40_reco = new TH1F(Form("hpp_Jet40_reco_R%d_%s",radius,etaWidth),Form("reco jtpt from Jet40 && !Jet60 && !Jet80 trigger R%d %s ",radius,etaWidth),1000,0,1000);
-  // hpp_anaBin_JetComb_gen = new TH1F(Form("hpp_anaBin_JetComb_gen_R%d_%s",radius,etaWidth),Form("Gen refpt from HLT trigger combined R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt);
-  // hpp_anaBin_JetComb_reco = new TH1F(Form("hpp_anaBin_JetComb_reco_R%d_%s",radius,etaWidth),Form("reco jtpt from HLT trigger combined R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt);
-  // hpp_anaBin_Jet80_gen = new TH1F(Form("hpp_anaBin_Jet80_gen_R%d_%s",radius,etaWidth),Form("Gen refpt from Jet80 trigger R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt);
-  // hpp_anaBin_Jet80_reco = new TH1F(Form("hpp_anaBin_Jet80_reco_R%d_%s",radius,etaWidth),Form("reco jtpt from Jet80 trigger R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt);
-  // hpp_anaBin_Jet60_gen = new TH1F(Form("hpp_anaBin_Jet60_gen_R%d_%s",radius,etaWidth),Form("Gen refpt from Jet60 && !Jet80 trigger R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt);
-  // hpp_anaBin_Jet60_reco = new TH1F(Form("hpp_anaBin_Jet60_reco_R%d_%s",radius,etaWidth),Form("reco jtpt from Jet60 && !Jet80 trigger R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt);
-  // hpp_anaBin_Jet40_gen = new TH1F(Form("hpp_anaBin_Jet40_gen_R%d_%s",radius,etaWidth),Form("Gen refpt from Jet40 && !Jet60 && !Jet80 trigger R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt);
-  // hpp_anaBin_Jet40_reco = new TH1F(Form("hpp_anaBin_Jet40_reco_R%d_%s",radius,etaWidth),Form("reco jtpt from Jet40 && !Jet60 && !Jet80 trigger R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt);  
-
- 
-  // hpp_anaBin_mcclosure_Trans_matrix_HLT = new TH2F(Form("hpp_anaBin_mcclosure_Trans_matrix_HLT_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_anaBin_mcclosure_matrix_HLT = new TH2F(Form("hpp_anaBin_mcclosure_matrix_HLT_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_mcclosure_matrix_HLT = new TH2F(Form("hpp_mcclosure_matrix_HLT_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-  // hpp_mcclosure_Trans_matrix_HLT = new TH2F(Form("hpp_mcclosure_Trans_matrix_HLT_R%d_%s",radius,etaWidth),Form("Trans Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-
-  // hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet40 = new TH2F(Form("hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet40_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_anaBin_mcclosure_matrix_HLT_Jet40 = new TH2F(Form("hpp_anaBin_mcclosure_matrix_HLT_Jet40_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_mcclosure_matrix_HLT_Jet40 = new TH2F(Form("hpp_mcclosure_matrix_HLT_Jet40_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-  // hpp_mcclosure_Trans_matrix_HLT_Jet40 = new TH2F(Form("hpp_mcclosure_Trans_matrix_HLT_Jet40_R%d_%s",radius,etaWidth),Form("Trans Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-
-  // hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet60 = new TH2F(Form("hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet60_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_anaBin_mcclosure_matrix_HLT_Jet60 = new TH2F(Form("hpp_anaBin_mcclosure_matrix_HLT_Jet60_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_mcclosure_matrix_HLT_Jet60 = new TH2F(Form("hpp_mcclosure_matrix_HLT_Jet60_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-  // hpp_mcclosure_Trans_matrix_HLT_Jet60 = new TH2F(Form("hpp_mcclosure_Trans_matrix_HLT_Jet60_R%d_%s",radius,etaWidth),Form("Trans Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-
-  // hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet80 = new TH2F(Form("hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet80_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_anaBin_mcclosure_matrix_HLT_Jet80 = new TH2F(Form("hpp_anaBin_mcclosure_matrix_HLT_Jet80_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),nbins_pt, boundaries_pt,nbins_pt, boundaries_pt);
-  // hpp_mcclosure_matrix_HLT_Jet80 = new TH2F(Form("hpp_mcclosure_matrix_HLT_Jet80_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-  // hpp_mcclosure_Trans_matrix_HLT_Jet80 = new TH2F(Form("hpp_mcclosure_Trans_matrix_HLT_Jet80_R%d_%s",radius,etaWidth),Form("Trans Matrix for mcclosure refpt jtpt from Jet triggers R%d %s ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-
-
-  // hpp_mcclosure_matrix = new TH2F(Form("hpp_mcclosure_matrix_R%d_%s",radius,etaWidth),Form("Matrix for mcclosure refpt jtpt R%d %s;reco pT; gen pT ",radius,etaWidth),1000, 0, 1000,1000, 0, 1000);
-  // hpp_mcclosure_data = new TH1F(Form("hpp_mcclosure_data_R%d_%s",radius,etaWidth),Form("data for unfolding mc closure test R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_gen = new TH1F(Form("hpp_mcclosure_gen_R%d_%s",radius,etaWidth),Form("gen spectra for unfolding mc closure test R%d %s ",radius,etaWidth),1000, 0, 1000);
-
-  // hpp_mcclosure_JetComb_data = new TH1F(Form("hpp_mcclosure_JetComb_data_R%d_%s",radius,etaWidth),Form("data for unfolding mc closure test trigger combined  R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet80_data = new TH1F(Form("hpp_mcclosure_Jet80_data_R%d_%s",radius,etaWidth),Form("data for unfolding mc closure test trigger 80  R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet60_data = new TH1F(Form("hpp_mcclosure_Jet60_data_R%d_%s",radius,etaWidth),Form("data for unfolding mc closure test trigger 60  R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet40_data = new TH1F(Form("hpp_mcclosure_Jet40_data_R%d_%s",radius,etaWidth),Form("data for unfolding mc closure test trigger 40  R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_data_train = new TH1F(Form("hpp_mcclosure_data_train_R%d_%s",radius,etaWidth),Form("data_train for unfolding mc closure test R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_JetComb_data_train = new TH1F(Form("hpp_mcclosure_JetComb_data_train_R%d_%s",radius,etaWidth),Form("data_train for unfolding mc closure test trigger combined  R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet80_data_train = new TH1F(Form("hpp_mcclosure_Jet80_data_train_R%d_%s",radius,etaWidth),Form("data_train for unfolding mc closure test trigger 80  R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet60_data_train = new TH1F(Form("hpp_mcclosure_Jet60_data_train_R%d_%s",radius,etaWidth),Form("data_train for unfolding mc closure test trigger 60  R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet40_data_train = new TH1F(Form("hpp_mcclosure_Jet40_data_train_R%d_%s",radius,etaWidth),Form("data_train for unfolding mc closure test trigger 40  R%d %s ",radius,etaWidth),1000, 0, 1000);  
-  // hpp_mcclosure_JetComb_gen = new TH1F(Form("hpp_mcclosure_gen_JetComb_R%d_%s",radius,etaWidth),Form("gen spectra for unfolding mc closure test trigger combined R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet80_gen = new TH1F(Form("hpp_mcclosure_gen_Jet80_R%d_%s",radius,etaWidth),Form("gen spectra for unfolding mc closure test trigger 80 R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet60_gen = new TH1F(Form("hpp_mcclosure_gen_Jet60_R%d_%s",radius,etaWidth),Form("gen spectra for unfolding mc closure test trigger 60 R%d %s ",radius,etaWidth),1000, 0, 1000);
-  // hpp_mcclosure_Jet40_gen = new TH1F(Form("hpp_mcclosure_gen_Jet40_R%d_%s",radius,etaWidth),Form("gen spectra for unfolding mc closure test trigger 40 R%d %s ",radius,etaWidth),1000, 0, 1000);
-
-
-  // TH3F * hJEC= new TH3F("hJEC",";raw p_{T};#eta;JEC",500, 0, 500, 200, -5, +5, 300, 0, 5);
-  // TH1F * hJER[nbins_pt];
-  // TH1F * hJER_eta_30pt50[nbins_eta];
-  // TH1F * hJER_eta_150pt200[nbins_eta];
-  TH1F * hJEC_ppJEC[nbins_pt][nbins_eta];
-  TH1F * hJEC_hinJEC[nbins_pt][nbins_eta];
-  TH2F * hJEC_Applied_ppJEC[nbins_eta];
-  TH2F * hJEC_Applied_hinJEC[nbins_eta];
-  for(int y = 0; y<nbins_eta; ++y){
-    hJEC_Applied_ppJEC[y] = new TH2F(Form("hJEC_Applied_ppJEC_etabin%d", y), "", nbins_pt, ptbins, 60, 0, 3);
-    hJEC_Applied_hinJEC[y] = new TH2F(Form("hJEC_Applied_hinJEC_etabin%d", y), "", nbins_pt, ptbins, 60, 0, 3);
-    for(int x = 0; x<nbins_pt; ++x){
-      hJEC_ppJEC[x][y] = new TH1F(Form("hJEC_ppJEC_ptbin%d_etabin%d",x,y),Form("recopt-genpt/genpt %2.0f < genpt < %2.0f, %2.4f < geneta < %2.4f",ptbins[x], ptbins[x+1], etabins[y], etabins[y+1]),300, 0, 3);
-      hJEC_hinJEC[x][y] = new TH1F(Form("hJEC_hinJEC_ptbin%d_etabin%d",x,y),Form("recopt-genpt/genpt %2.0f < genpt < %2.0f, %2.4f < geneta < %2.4f",ptbins[x], ptbins[x+1], etabins[y], etabins[y+1]),300, 0, 3);
+  //! JES/JER plots 
+  TH1F * hJEC[nbins_pt_jec][nbins_eta_jec];
+  TH2F * hJEC_Applied[nbins_eta_jec];  
+  for(int y = 0; y<nbins_eta_jec; ++y){
+    hJEC_Applied[y] = new TH2F(Form("hJEC_Applied_etabin%d", y), "", nbins_pt_jec, ptbins_jec, 60, 0, 3);
+    for(int x = 0; x<nbins_pt_jec; ++x){
+      hJEC[x][y] = new TH1F(Form("hJEC_ptbin%d_etabin%d",x,y),Form("recopt-genpt/genpt %2.0f < genpt < %2.0f, %2.4f < geneta < %2.4f",ptbins_jec[x], ptbins_jec[x+1], etabins_jec[y], etabins_jec[y+1]),300, 0, 3);
     }
   }
   
-  TH1F * hVz = new TH1F("hVz","",200, -20, 20);
-  
-  // for(int bin = 0; bin<nbins_pt; ++bin){
-  //   hJER[bin] = new TH1F(Form("hJER_%d_pt_%d", ptbins[bin], ptbins[bin+1]),"",100, -2, 2);
-  // }
-
-  // for(int bin = 0; bin<nbins_eta; ++bin){
-  //   hJER_eta_30pt50[bin] = new TH1F(Form("hJER_etabin%d_30_pt_50", bin),Form("rawpt/genpt 30 < genpt < 50, %2.4f < geneta < %2.4f", etabins[bin], etabins[bin+1]),200, -2, 2);
-  //   hJER_eta_150pt200[bin] = new TH1F(Form("hJER_etabin%d_150_pt_200", bin),Form("rawpt/genpt 150 < genpt < 200, %2.4f < geneta < %2.4f", etabins[bin], etabins[bin+1]),200, -2, 2);
-  // }
-
-  // Add the Jet ID plots:
-  // list of variables:
-  // std::string var[21] = {"jtpt" ,"rawpt", "jteta", "jtphi", "trkMax", "trkSum", "trkHardSum", "chMax", "chSum", "chHardSum","phMax", "phSum", "phHardSum", "neMax", "neSum", "eMax", "eSum", "muMax", "muSum" ,"Aj","xj"};
-  // TH1F * hJetQA[3][21];
-
-  // for(int k = 0; k<3; ++k){
-  //   for(int j = 0; j<21; ++j){
-  //     if(j==2) hJetQA[k][j] = new TH1F(Form("hJetQA_%dwJetID_%s",k,var[j].c_str()),Form(";%s;",var[j].c_str()),100, -5, +5);
-  //     else if(j==3) hJetQA[k][j] = new TH1F(Form("hJetQA_%dwJetID_%s",k,var[j].c_str()),Form(";%s;",var[j].c_str()),100, -4, +4);
-  //     else if(j<=1)hJetQA[k][j] = new TH1F(Form("hJetQA_%dwJetID_%s",k,var[j].c_str()),Form(";%s;",var[j].c_str()),500, 0, 500);
-  //     else if(j>=4)hJetQA[k][j] = new TH1F(Form("hJetQA_%dwJetID_%s",k,var[j].c_str()),Form(";%s;",var[j].c_str()),200, 0, 2);
-  //   }
-  // }
-  // double RMS = 0.22;
-  
-  // TH1F * hpp_DijetSignalSelection_LeadPFJet_gt_A = new TH1F("hpp_DijetSignalSelection_LeadPFJet_gt_A","",1000, 0, 1000);
-  // TH2F * hdphiptcent_DijetSignalSelection_LeadPFJet_gt_A = new TH2F("hdphiptcent_DijetSignalSelection_LeadPFJet_gt_A","",100, 0, 200,160,0,3.2);  
-  // TH1F * hpp_DijetBKGSelection_LeadPFJet_lt_A = new TH1F("hpp_DijetBKGSelection_LeadPFJet_lt_A","",1000, 0, 1000);;
-  // TH2F * hdphiptcent_DijetBKGSelection_LeadPFJet_lt_A = new TH2F("hdphiptcent_DijetBKGSelection_LeadPFJet_lt_A","",100, 0, 200, 160,0,3.2); 
-  
-  // now start the event loop for each file.
-  
   if(printDebug) cout<<"Running through all the events now"<<endl;
-  Long64_t nentries = jetpp[0]->GetEntries();
-  //Long64_t nGoodEvt = 0;
-  if(printDebug) nentries = 10;
+  Long64_t nentries = jetTree[0]->GetEntries();
+  if(printDebug) nentries = 100;
   TRandom rnd; 
-  // TF1 *fVzPP = new TF1("fVzPP","[0]+[1]*x+[2]*x*x+[3]*x*x*x+[4]*x*x*x*x");
-  // // my weights 
-  // //fVzPP->SetParameters(1.05602e00,5.74688e-03,-3.37288e-03,-1.44764e-05,8.59060e-07);
-  // // anna's weights
-  // fVzPP->SetParameters(+0.941, -0.0173, +3.23e-3, +3.61e-6, -1.04e-5);
-
-  nentries = 50000;
+  
   for(int nEvt = 0; nEvt < nentries; ++ nEvt) {
 
     if(nEvt%10000 == 0)cout<<nEvt<<"/"<<nentries<<endl;
     if(printDebug)cout<<"nEvt = "<<nEvt<<endl;
     
-    // jetpp[0]->GetEntry(nEvt);
-    // jetpp[1]->GetEntry(nEvt);
-    jetpp[2]->GetEntry(nEvt);
-    // jetpp[3]->GetEntry(nEvt);
-    // jetpp[4]->GetEntry(nEvt);
-    
-    //if(printDebug) cout<<"forest values = "<<hiBin_F<<", "<<evt_F<<", "<<run_F<<", "<<lumi_F<<", "<<vz_F<<endl;
-    
-    // double weight_eS = pthatweight;
-    double weight_eS = 1.0;
-    if(printDebug) cout<<"weight_eS ="<<weight_eS<<endl;
-    // if(fabs(vz_F)>15 ||
-    //    !pprimaryvertexFilter_F ||
-    //    !pVertexFilterCutGplus_F ||
-    //    !pHBHENoiseFilter_F) continue;
+    for(int t = 0;t<N;t++)
+      jetTree[t]->GetEntry(nEvt);
 
+    if(fabs(vz_F)>15 || !pprimaryvertexFilter_F ||
+       !pVertexFilterCutGplus_F || !pHBHENoiseFilter_F)
+      continue;
+    if(!jet40_F && !jet60_F && !jet80_F)
+      continue;
     
-    // double vz_weight = fVzPP->Eval(vz_F[0]);
-    // weight_eS = pthatweight * vz_weight;
+    double ev_weight = 0.0;
+    ev_weight = pthatWeight(pthat_F, xsec_F);
 
-    hpthat->Fill(pthat_F, weight_eS);
-
-    // hVz->Fill(vz_F[0], weight_eS);
-    //cout<<"after filling vz"<<endl;
-    
-    // std::vector <float> pt;
-    // std::vector <float> phi;
-    // std::vector <float> eta;
+    double ptlead = 0.0;
+    double ptsublead = 0.0;
+    int counter = 0;
     
     for(int jet = 0; jet<nref_F; ++jet){
 
-      // if(fabs(eta_F[jet]) > 2) continue;
+      if(fabs(eta_F[jet]) > 3.0) continue;
       if(subid_F[jet] != 0) continue;
       if(pt_F[jet] > 3 * pthat_F) continue;
       if(refdrjt_F[jet] > (float)radius/10) continue; 
+
+      double genpt = refpt_F[jet];
+      double recpt = pt_F[jet];
+      double receta = eta_F[jet];
+      double rawpt = rawpt_F[jet];
+
+      if(counter == 0) ptlead = recpt;
+      if(counter == 1) ptsublead = recpt;
+      counter++;
       
-      float genpt = refpt_F[jet];
-      float geneta = refeta_F[jet];
-      float recpt = pt_F[jet];
-      float rawpt = rawpt_F[jet];
-      
-      // pp jet ID
-      bool passesJetID=false;
-      if (  !( neSum_F[jet]/rawpt >= 0.99 || //neutral had //for abs(eta)<2.7
-      	       phSum_F[jet]/rawpt >= 0.99 || //neutral em
-      	       chSum_F[jet]/rawpt <= 0.   || //charged had //for abs(eta)<2.4 only
-      	       eSum_F[jet]/rawpt  >= 0.99 || //electrons
-      	       chN_F[jet]+neN_F[jet] <= 1 || //Nconstit.=NchHad+NneuHad
-      	       chN_F[jet] <= 0 ) )
-      	passesJetID=true;
-      
-      if(passesJetID) {
-	hpp_gen->Fill(genpt, weight_eS);
-	hpp_reco->Fill(recpt, weight_eS);
-
-	// pt.push_back(recpt);
-	// eta.push_back(eta_F[jet]);
-	// phi.push_back(phi_F[jet]);
-	int etabin = -1;
-	for(int bin = 0; bin<nbins_eta; ++bin){
-	  if(fabs(geneta) > etabins[bin]) etabin = bin;
-	}
-	if(etabin == -1) continue;
-
-	int binx = -1;
-	for(int bin = 0; bin<nbins_pt; ++bin){
-	  if(genpt > ptbins[bin]) binx = bin;
-	}
-	if(binx == -1) continue;
-
-	//! hin JEC:
-	hJEC_hinJEC[binx][etabin]->Fill((float)(recpt)/genpt, weight_eS);
-	hJEC_Applied_hinJEC[etabin]->Fill(rawpt, (float)recpt/rawpt, weight_eS);
-	if(printDebug) cout<<"rawpt = "<<rawpt<<" hin JEC applied = "<<recpt/rawpt<<endl;
-
-	//! get the pp JEC 
-	vector<JetCorrectorParameters> vpar_Summer16v5;   
-	FactorizedJetCorrector *JEC_Summer16v5 = new FactorizedJetCorrector(vpar_Summer16v5);
-	string L2Name;
-	string L3Name;
-	L2Name="Summer16_25nsV5_MC_L2Relative_AK4PF.txt";
-	L3Name="Summer16_25nsV5_MC_L3Absolute_AK4PF.txt";    
-	// cout << "Using .txt files to update JECs..." << endl;
-	// cout << "L2: "<< L2Name << endl;
-	// cout << "L3: "<< L3Name << endl;
-	JetCorrectorParameters *parFall15_v2_l2 = new JetCorrectorParameters(L2Name.c_str());
-	JetCorrectorParameters *parFall15_v2_l3 = new JetCorrectorParameters(L3Name.c_str());
-	vpar_Summer16v5.push_back(*parFall15_v2_l2);
-	vpar_Summer16v5.push_back(*parFall15_v2_l3);
-	JEC_Summer16v5 = new FactorizedJetCorrector(vpar_Summer16v5);
-	JEC_Summer16v5->setJetEta(eta_F[jet]);
-	JEC_Summer16v5->setJetPt(rawpt);
-	float jetcorr = JEC_Summer16v5->getCorrection();
-	float ppjetpt = jetcorr * rawpt;
-	// cout << "rawpt = " << rawpt << ", hin jec pt = " << recpt << ", pp jec pt = "<< ppjetpt << endl;
-
-	hJEC_ppJEC[binx][etabin]->Fill((float)(ppjetpt)/genpt, weight_eS);
-	hJEC_Applied_ppJEC[etabin]->Fill(rawpt, (float)ppjetpt/rawpt, weight_eS);
-
+      int etabin = -1;      
+      for(int bin = 0; bin<nbins_eta_jec; ++bin){
+	if(fabs(receta) > etabins_jec[bin]) etabin = bin;
       }
-      /*
-      if(jet40_F == 1 && jet60_F==0 && jet80_F == 0){
- 
-	hpp_Jet40_gen->Fill(genpt, weight_eS * jet40_p_F);
-	hpp_Jet40_reco->Fill(recpt, weight_eS * jet40_p_F);
-
-	hpp_matrix_HLT_Jet40->Fill(genpt, recpt, weight_eS * jet40_p_F);
-	hpp_Trans_matrix_HLT_Jet40->Fill(recpt, genpt, weight_eS * jet40_p_F);
-	hpp_anaBin_Trans_matrix_HLT_Jet40->Fill(recpt, genpt, weight_eS * jet40_p_F);
-	hpp_anaBin_matrix_HLT_Jet40->Fill(genpt, recpt, weight_eS * jet40_p_F);
-
-	//hpp_Trans_matrix_HLT_gen2pSmear->Fill(recpt, genpt * (1. + 0.02/nbins_cent*(nbins_cent-cBin)), weight_eS * jet55_p_F);
-	hpp_Trans_matrix_HLT_GenSmear->Fill( recpt , genpt + rnd.Gaus(0,1), weight_eS * jet40_p_F);
-	hpp_Trans_matrix_HLT_RecoSmear->Fill( recpt + rnd.Gaus(0,1), genpt, weight_eS * jet40_p_F);
-	hpp_Trans_matrix_HLT_BothSmear->Fill( recpt + rnd.Gaus(0,1), genpt + rnd.Gaus(0,1), weight_eS * jet40_p_F);
-
-	//hpp_matrix_HLT_gen2pSmear->Fill(genpt * (1. + 0.02/nbins_cent*(nbins_cent-cBin)), recpt, weight_eS * jet55_p_F);
-	hpp_matrix_HLT_GenSmear->Fill(genpt + rnd.Gaus(0,1), recpt, weight_eS * jet40_p_F);
-	hpp_matrix_HLT_RecoSmear->Fill(genpt, recpt + rnd.Gaus(0,1), weight_eS * jet40_p_F);
-	hpp_matrix_HLT_BothSmear->Fill(genpt + rnd.Gaus(0,1), recpt + rnd.Gaus(0,1), weight_eS * jet40_p_F);
-
-	
-	hpp_anaBin_Jet40_gen->Fill(genpt, weight_eS * jet40_p_F);
-	hpp_anaBin_Jet40_reco->Fill(recpt, weight_eS * jet40_p_F);
-	
-	if(nEvt%2==0) {
-	  hpp_anaBin_mcclosure_matrix_HLT_Jet40->Fill(genpt, recpt, weight_eS * jet40_p_F);
-	  hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet40->Fill(recpt, genpt, weight_eS * jet40_p_F);
-	  hpp_mcclosure_Trans_matrix_HLT_Jet40->Fill(recpt, genpt, weight_eS * jet40_p_F);
-	  hpp_mcclosure_matrix_HLT_Jet40->Fill(genpt, recpt, weight_eS * jet40_p_F);
-	  
-	  hpp_mcclosure_Jet40_gen->Fill(genpt, weight_eS * jet40_p_F);
-	  hpp_mcclosure_Jet40_data_train->Fill(recpt, weight_eS * jet40_p_F);
-	}
-	if(nEvt%2==1) {
-	  hpp_mcclosure_Jet40_data->Fill(recpt, weight_eS * jet40_p_F);
-	}
-
-
-	if(refparton_F[jet] < 9){
-	  hpp_quark_Jet40_gen->Fill(genpt, weight_eS * jet40_p_F);
-	  hpp_quark_Jet40_reco->Fill(recpt, weight_eS * jet40_p_F);
-	  hpp_Trans_matrix_quark_HLT->Fill(recpt, genpt, weight_eS * jet40_p_F);
-	  if(nEvt%2==0){
-	    hpp_mcclosure_Trans_matrix_quark_HLT->Fill(recpt, genpt, weight_eS * jet40_p_F);
-	  }else if(nEvt%2==1){
-	    hpp_mcclosure_quark_Jet40_gen->Fill(genpt, weight_eS * jet40_p_F);
-	    hpp_mcclosure_quark_Jet40_reco->Fill(recpt, weight_eS * jet40_p_F);
-	  }
-	}
-
-	if(refparton_F[jet] == 21){
-	  hpp_gluon_Jet40_gen->Fill(genpt, weight_eS * jet40_p_F);
-	  hpp_gluon_Jet40_reco->Fill(recpt, weight_eS * jet40_p_F);
-	  hpp_Trans_matrix_gluon_HLT->Fill(recpt, genpt, weight_eS * jet40_p_F);
-	  if(nEvt%2==0){
-	    hpp_mcclosure_Trans_matrix_gluon_HLT->Fill(recpt, genpt, weight_eS * jet40_p_F);
-	  }else if(nEvt%2==1){
-	    hpp_mcclosure_gluon_Jet40_gen->Fill(genpt, weight_eS * jet40_p_F);
-	    hpp_mcclosure_gluon_Jet40_reco->Fill(recpt, weight_eS * jet40_p_F);
-	  }
-	}
-	
-      }
+      if(etabin == -1) continue;
       
-      if(jet60_F == 1 && jet80_F == 0){
-
-	hpp_Jet60_gen->Fill(genpt, weight_eS);
-	hpp_Jet60_reco->Fill(recpt, weight_eS);
-	hpp_anaBin_Jet60_gen->Fill(genpt, weight_eS);
-	hpp_anaBin_Jet60_reco->Fill(recpt, weight_eS);
-
-	//hpp_Trans_matrix_HLT_gen2pSmear->Fill(recpt, genpt * (1. + 0.02/nbins_cent*(nbins_cent-cBin)), weight_eS);
-	hpp_Trans_matrix_HLT_GenSmear->Fill( recpt , genpt + rnd.Gaus(0,1), weight_eS);
-	hpp_Trans_matrix_HLT_RecoSmear->Fill( recpt + rnd.Gaus(0,1), genpt, weight_eS);
-	hpp_Trans_matrix_HLT_BothSmear->Fill( recpt + rnd.Gaus(0,1), genpt + rnd.Gaus(0,1), weight_eS);
-
-	//hpp_matrix_HLT_gen2pSmear->Fill(genpt * (1. + 0.02/nbins_cent*(nbins_cent-cBin)), recpt, weight_eS);
-	hpp_matrix_HLT_GenSmear->Fill(genpt + rnd.Gaus(0,1), recpt, weight_eS);
-	hpp_matrix_HLT_RecoSmear->Fill(genpt, recpt + rnd.Gaus(0,1), weight_eS);
-	hpp_matrix_HLT_BothSmear->Fill(genpt + rnd.Gaus(0,1), recpt + rnd.Gaus(0,1), weight_eS);
-
-	
-	hpp_matrix_HLT_Jet60->Fill(genpt, recpt, weight_eS);
-	hpp_anaBin_matrix_HLT_Jet60->Fill(genpt, recpt, weight_eS);
-	hpp_Trans_matrix_HLT_Jet60->Fill(recpt, genpt, weight_eS);
-	hpp_anaBin_Trans_matrix_HLT_Jet60->Fill(recpt, genpt, weight_eS);
-
-	if(nEvt%2==0) {
-	  hpp_anaBin_mcclosure_matrix_HLT_Jet60->Fill(genpt, recpt, weight_eS);
-	  hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet60->Fill(recpt, genpt, weight_eS);
-	  hpp_mcclosure_Trans_matrix_HLT_Jet60->Fill(recpt, genpt, weight_eS);
-	  hpp_mcclosure_matrix_HLT_Jet60->Fill(genpt, recpt, weight_eS);
-	  hpp_mcclosure_Jet60_gen->Fill(genpt, weight_eS);
-	  hpp_mcclosure_Jet60_data_train->Fill(recpt, weight_eS);
-	}
-	if(nEvt%2==1) {
-	  hpp_mcclosure_Jet60_data->Fill(recpt, weight_eS);
-	}
-
-
-	if(refparton_F[jet] < 9){
-	  hpp_quark_Jet60_gen->Fill(genpt, weight_eS);
-	  hpp_quark_Jet60_reco->Fill(recpt, weight_eS);
-	  hpp_Trans_matrix_quark_HLT->Fill(recpt, genpt, weight_eS);
-	  if(nEvt%2==0){
-	    hpp_mcclosure_Trans_matrix_quark_HLT->Fill(recpt, genpt, weight_eS);
-	  }else if(nEvt%2==1){
-	    hpp_mcclosure_quark_Jet60_gen->Fill(genpt, weight_eS);
-	    hpp_mcclosure_quark_Jet60_reco->Fill(recpt, weight_eS);
-	  }
-	}
-
-	if(refparton_F[jet] == 21){
-	  hpp_gluon_Jet60_gen->Fill(genpt, weight_eS);
-	  hpp_gluon_Jet60_reco->Fill(recpt, weight_eS);
-	  hpp_Trans_matrix_gluon_HLT->Fill(recpt, genpt, weight_eS);
-	  if(nEvt%2==0){
-	    hpp_mcclosure_Trans_matrix_gluon_HLT->Fill(recpt, genpt, weight_eS);
-	  }else if(nEvt%2==1){
-	    hpp_mcclosure_gluon_Jet60_gen->Fill(genpt, weight_eS);
-	    hpp_mcclosure_gluon_Jet60_reco->Fill(recpt, weight_eS);
-	  }
-	}
-	
+      int binx = -1;
+      for(int bin = 0; bin<nbins_pt_jec; ++bin){
+	if(genpt > ptbins_jec[bin]) binx = bin;
       }
-
-      if(jet80_F == 1){
-
-	hpp_Jet80_gen->Fill(genpt, weight_eS);
-	hpp_Jet80_reco->Fill(recpt, weight_eS);
-	hpp_anaBin_Jet80_gen->Fill(genpt, weight_eS);
-	hpp_anaBin_Jet80_reco->Fill(recpt, weight_eS);
-	hpp_matrix_HLT_Jet80->Fill(genpt, recpt, weight_eS);
-	hpp_anaBin_matrix_HLT_Jet80->Fill(genpt, recpt, weight_eS);
-	hpp_Trans_matrix_HLT_Jet80->Fill(recpt, genpt, weight_eS);
-	hpp_anaBin_Trans_matrix_HLT_Jet80->Fill(recpt, genpt, weight_eS);
-	
-	//hpp_Trans_matrix_HLT_gen2pSmear->Fill(recpt, genpt * (1. + 0.02/nbins_cent*(nbins_cent-cBin)), weight_eS);
-	hpp_Trans_matrix_HLT_GenSmear->Fill( recpt , genpt + rnd.Gaus(0,1), weight_eS);
-	hpp_Trans_matrix_HLT_RecoSmear->Fill( recpt + rnd.Gaus(0,1), genpt, weight_eS);
-	hpp_Trans_matrix_HLT_BothSmear->Fill( recpt + rnd.Gaus(0,1), genpt + rnd.Gaus(0,1), weight_eS);
-
-	//hpp_matrix_HLT_gen2pSmear->Fill(genpt * (1. + 0.02/nbins_cent*(nbins_cent-cBin)), recpt, weight_eS);
-	hpp_matrix_HLT_GenSmear->Fill(genpt + rnd.Gaus(0,1), recpt, weight_eS);
-	hpp_matrix_HLT_RecoSmear->Fill(genpt, recpt + rnd.Gaus(0,1), weight_eS);
-	hpp_matrix_HLT_BothSmear->Fill(genpt + rnd.Gaus(0,1), recpt + rnd.Gaus(0,1), weight_eS);
-
-	if(nEvt%2==0) {
-	  hpp_anaBin_mcclosure_matrix_HLT_Jet80->Fill(genpt, recpt, weight_eS);
-	  hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet80->Fill(recpt, genpt, weight_eS);
-	  hpp_mcclosure_Trans_matrix_HLT_Jet80->Fill(recpt, genpt, weight_eS);
-	  hpp_mcclosure_matrix_HLT_Jet80->Fill(genpt, recpt, weight_eS);
-	  hpp_mcclosure_Jet80_gen->Fill(genpt, weight_eS);
-	  hpp_mcclosure_Jet80_data_train->Fill(recpt, weight_eS);
-	}
-	if(nEvt%2==1) {
-	  hpp_mcclosure_Jet80_data->Fill(recpt, weight_eS);
-	}
-
-	if(refparton_F[jet] < 9){
-	  hpp_quark_Jet80_gen->Fill(genpt, weight_eS);
-	  hpp_quark_Jet80_reco->Fill(recpt, weight_eS);
-	  hpp_Trans_matrix_quark_HLT->Fill(recpt, genpt, weight_eS);
-	  if(nEvt%2==0){
-	    hpp_mcclosure_Trans_matrix_quark_HLT->Fill(recpt, genpt, weight_eS);
-	  }else if(nEvt%2==1){
-	    hpp_mcclosure_quark_Jet80_gen->Fill(genpt, weight_eS);
-	    hpp_mcclosure_quark_Jet80_reco->Fill(recpt, weight_eS);
-	  }
-	}
-
-	if(refparton_F[jet] == 21){
-	  hpp_gluon_Jet80_gen->Fill(genpt, weight_eS);
-	  hpp_gluon_Jet80_reco->Fill(recpt, weight_eS);
-	  hpp_Trans_matrix_gluon_HLT->Fill(recpt, genpt, weight_eS);
-	  if(nEvt%2==0){
-	    hpp_mcclosure_Trans_matrix_gluon_HLT->Fill(recpt, genpt, weight_eS);
-	  }else if(nEvt%2==1){
-	    hpp_mcclosure_gluon_Jet80_gen->Fill(genpt, weight_eS);
-	    hpp_mcclosure_gluon_Jet80_reco->Fill(recpt, weight_eS);
-	  }
-	}
-	
-      }
-
-      */
+      if(binx == -1) continue;
       
-    }// jet loop
+      //! hin JEC:
+      hJEC[binx][etabin]->Fill((float)(recpt)/genpt, ev_weight);
+      hJEC_Applied[etabin]->Fill(rawpt, (float)recpt/rawpt, ev_weight);      
+      hrefpt->Fill(refpt_F[jet], ev_weight);
+      hjtpt->Fill(pt_F[jet], ev_weight);
+      hjteta->Fill(eta_F[jet], ev_weight);
+      hjtphi->Fill(phi_F[jet], ev_weight);
+      hjtm->Fill(m_F[jet], ev_weight);
+      hCHF->Fill(jtPfCHF_F[jet], ev_weight);
+      hNHF->Fill(jtPfNHF_F[jet], ev_weight);
+      hCEF->Fill(jtPfCEF_F[jet], ev_weight);
+      hNEF->Fill(jtPfNEF_F[jet], ev_weight);
+      hMUF->Fill(jtPfMUF_F[jet], ev_weight);
+      hCHM->Fill(jtPfCHM_F[jet], ev_weight);
+      hNHM->Fill(jtPfNHM_F[jet], ev_weight);
+      hCEM->Fill(jtPfCEM_F[jet], ev_weight);
+      hNEM->Fill(jtPfNEM_F[jet], ev_weight);
+      hMUM->Fill(jtPfMUM_F[jet], ev_weight);
+    }
 
-    // hJetQA[0][19]->Fill((float)(pt_F[0]-pt_F[1])/(pt_F[0]+pt_F[1]), weight_eS);
-    // hJetQA[0][20]->Fill((float)(pt_F[1]/pt_F[0]), weight_eS);
-	    
+    hpthat->Fill(pthat_F, ev_weight);
+    hVz->Fill(vz_F, ev_weight);
+    hhiBin->Fill(hiBin_F, ev_weight);
+    hNpix->Fill(hiNpix_F, ev_weight);
+    hHF->Fill(hiHF_F, ev_weight);
+    hHFplus->Fill(hiHFplus_F, ev_weight);
+    hHFminus->Fill(hiHFminus_F, ev_weight);
+    hZDC->Fill(hiZDC_F, ev_weight);
+    hZDCplus->Fill(hiZDCplus_F, ev_weight);
+    hZDCminus->Fill(hiZDCminus_F, ev_weight);
+    hHFhit->Fill(hiHFhit_F, ev_weight);
+    hHFhitplus->Fill(hiHFhitplus_F, ev_weight);
+    hHFhitminus->Fill(hiHFhitminus_F, ev_weight);
+    hNtracks->Fill(hiNtracks_F, ev_weight);
 
-    //if(pt.size() <=1) continue;
-
-    // double delphi_lead_sublead = deltaphi(phi[0], phi[1]);
-    // bool isSignal = true;
-
-    // if((pt[0] > 3 * RMS) && (delphi_lead_sublead < 2 * (float)TMath::Pi()/3))
-    //   isSignal = false;
-    // if(pt[0] > 3 * RMS && delphi_lead_sublead > 2 * (float)TMath::Pi()/3 && pt[1] < 1.6 * RMS ) isSignal = false;
-    // if(pt[0] < 3 * RMS ) isSignal = false;
-
-    // for(unsigned j = 1; j<pt.size(); ++j){
-    //   float delphi = deltaphi (phi[0], phi[j]);
-    //   if(isSignal) hdphiptcent_DijetSignalSelection_LeadPFJet_gt_A->Fill(pt[0], delphi, weight_eS);
-    //   if(!isSignal) hdphiptcent_DijetBKGSelection_LeadPFJet_lt_A->Fill(pt[0], delphi, weight_eS);      
-    // }
-
-    // for(unsigned j = 0; j<pt.size(); ++j){
-    //   if(isSignal) hpp_DijetSignalSelection_LeadPFJet_gt_A->Fill(pt[j], weight_eS);
-    //   if(!isSignal) hpp_DijetBKGSelection_LeadPFJet_lt_A->Fill(pt[j], weight_eS);
-    // }
-
-    //pt.clear();
-    //eta.clear();
-    //phi.clear();
-    
-    if(printDebug)cout<<endl;
-
+    double Aj = 0.0;
+    if(ptlead!=0.0 && ptsublead!=0.0){
+      Aj = (double)(ptlead - ptsublead)/(ptlead + ptsublead);
+      hAj->Fill(Aj, ev_weight);
+      hAjvshiBin->Fill(hiBin_F, Aj, ev_weight);
+      hAjvsNpix->Fill(hiNpix_F, Aj, ev_weight);
+      hAjvsNtracks->Fill(hiNtracks_F, Aj, ev_weight);
+      hAjvsHF->Fill(hiHF_F, Aj, ev_weight);
+      hAjvsHFplus->Fill(hiHFplus_F, Aj, ev_weight);
+      hAjvsHFminus->Fill(hiHFminus_F, Aj, ev_weight);
+      hAjvsZDC->Fill(hiZDC_F, Aj, ev_weight);
+      hAjvsZDCplus->Fill(hiZDCplus_F, Aj, ev_weight);
+      hAjvsZDCminus->Fill(hiZDCminus_F, Aj, ev_weight);
+      hAjvsHFhit->Fill(hiHFhit_F, Aj, ev_weight);
+      hAjvsHFhitplus->Fill(hiHFhitplus_F, Aj, ev_weight);
+      hAjvsHFhitminus->Fill(hiHFhitminus_F, Aj, ev_weight);
+    }
+        
   }// event loop
-
-  // hpp_quark_JetComb_gen->Add(hpp_quark_Jet80_gen);
-  // hpp_quark_JetComb_gen->Add(hpp_quark_Jet60_gen);
-  // hpp_quark_JetComb_gen->Add(hpp_quark_Jet40_gen);
-
-  // hpp_gluon_JetComb_gen->Add(hpp_gluon_Jet80_gen);
-  // hpp_gluon_JetComb_gen->Add(hpp_gluon_Jet60_gen);
-  // hpp_gluon_JetComb_gen->Add(hpp_gluon_Jet40_gen);
-
-  // hpp_quark_JetComb_reco->Add(hpp_quark_Jet80_reco);
-  // hpp_quark_JetComb_reco->Add(hpp_quark_Jet60_reco);
-  // hpp_quark_JetComb_reco->Add(hpp_quark_Jet40_reco);
-
-  // hpp_gluon_JetComb_reco->Add(hpp_gluon_Jet80_reco);
-  // hpp_gluon_JetComb_reco->Add(hpp_gluon_Jet60_reco);
-  // hpp_gluon_JetComb_reco->Add(hpp_gluon_Jet40_reco);
-
-  // hpp_mcclosure_quark_JetComb_gen->Add(hpp_mcclosure_quark_Jet80_gen);
-  // hpp_mcclosure_quark_JetComb_gen->Add(hpp_mcclosure_quark_Jet60_gen);
-  // hpp_mcclosure_quark_JetComb_gen->Add(hpp_mcclosure_quark_Jet40_gen);
-
-  // hpp_mcclosure_gluon_JetComb_gen->Add(hpp_mcclosure_gluon_Jet80_gen);
-  // hpp_mcclosure_gluon_JetComb_gen->Add(hpp_mcclosure_gluon_Jet60_gen);
-  // hpp_mcclosure_gluon_JetComb_gen->Add(hpp_mcclosure_gluon_Jet40_gen);
-
-  // hpp_mcclosure_quark_JetComb_reco->Add(hpp_mcclosure_quark_Jet80_reco);
-  // hpp_mcclosure_quark_JetComb_reco->Add(hpp_mcclosure_quark_Jet60_reco);
-  // hpp_mcclosure_quark_JetComb_reco->Add(hpp_mcclosure_quark_Jet40_reco);
-
-  // hpp_mcclosure_gluon_JetComb_reco->Add(hpp_mcclosure_gluon_Jet80_reco);
-  // hpp_mcclosure_gluon_JetComb_reco->Add(hpp_mcclosure_gluon_Jet60_reco);
-  // hpp_mcclosure_gluon_JetComb_reco->Add(hpp_mcclosure_gluon_Jet40_reco);
-    
   
-  // hpp_matrix_HLT->Add(hpp_matrix_HLT_Jet80);
-  // hpp_matrix_HLT->Add(hpp_matrix_HLT_Jet60);
-  // hpp_matrix_HLT->Add(hpp_matrix_HLT_Jet40);
-  
-  // hpp_anaBin_matrix_HLT->Add(hpp_anaBin_matrix_HLT_Jet80);
-  // hpp_anaBin_matrix_HLT->Add(hpp_anaBin_matrix_HLT_Jet60);
-  // hpp_anaBin_matrix_HLT->Add(hpp_anaBin_matrix_HLT_Jet40);
-  
-  // hpp_Trans_matrix_HLT->Add(hpp_Trans_matrix_HLT_Jet80);
-  // hpp_Trans_matrix_HLT->Add(hpp_Trans_matrix_HLT_Jet60);
-  // hpp_Trans_matrix_HLT->Add(hpp_Trans_matrix_HLT_Jet40);
-  
-  // hpp_anaBin_Trans_matrix_HLT->Add(hpp_anaBin_Trans_matrix_HLT_Jet80);
-  // hpp_anaBin_Trans_matrix_HLT->Add(hpp_anaBin_Trans_matrix_HLT_Jet60);
-  // hpp_anaBin_Trans_matrix_HLT->Add(hpp_anaBin_Trans_matrix_HLT_Jet40);
-  
-  // hpp_mcclosure_matrix_HLT->Add(hpp_mcclosure_matrix_HLT_Jet80);
-  // hpp_mcclosure_matrix_HLT->Add(hpp_mcclosure_matrix_HLT_Jet60);
-  // hpp_mcclosure_matrix_HLT->Add(hpp_mcclosure_matrix_HLT_Jet40);
-  
-  // hpp_anaBin_mcclosure_matrix_HLT->Add(hpp_anaBin_mcclosure_matrix_HLT_Jet80);
-  // hpp_anaBin_mcclosure_matrix_HLT->Add(hpp_anaBin_mcclosure_matrix_HLT_Jet60);
-  // hpp_anaBin_mcclosure_matrix_HLT->Add(hpp_anaBin_mcclosure_matrix_HLT_Jet40);
-  
-  // hpp_mcclosure_Trans_matrix_HLT->Add(hpp_mcclosure_Trans_matrix_HLT_Jet80);
-  // hpp_mcclosure_Trans_matrix_HLT->Add(hpp_mcclosure_Trans_matrix_HLT_Jet60);
-  // hpp_mcclosure_Trans_matrix_HLT->Add(hpp_mcclosure_Trans_matrix_HLT_Jet40);
-  
-  // hpp_anaBin_mcclosure_Trans_matrix_HLT->Add(hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet80);
-  // hpp_anaBin_mcclosure_Trans_matrix_HLT->Add(hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet60);
-  // hpp_anaBin_mcclosure_Trans_matrix_HLT->Add(hpp_anaBin_mcclosure_Trans_matrix_HLT_Jet40);
-  
-  // hpp_mcclosure_JetComb_data->Add(hpp_mcclosure_Jet80_data);
-  // hpp_mcclosure_JetComb_data->Add(hpp_mcclosure_Jet60_data);
-  // hpp_mcclosure_JetComb_data->Add(hpp_mcclosure_Jet40_data);
-
-  // divideBinWidth(hpp_mcclosure_JetComb_data);
-  
-  // hpp_mcclosure_JetComb_data_train->Add(hpp_mcclosure_Jet80_data_train);
-  // hpp_mcclosure_JetComb_data_train->Add(hpp_mcclosure_Jet60_data_train);
-  // hpp_mcclosure_JetComb_data_train->Add(hpp_mcclosure_Jet40_data_train);
-
-  // divideBinWidth(hpp_mcclosure_JetComb_data_train);
-
-  // hpp_mcclosure_JetComb_gen->Add(hpp_mcclosure_Jet80_gen);
-  // hpp_mcclosure_JetComb_gen->Add(hpp_mcclosure_Jet60_gen);
-  // hpp_mcclosure_JetComb_gen->Add(hpp_mcclosure_Jet40_gen);
-
-  // divideBinWidth(hpp_mcclosure_JetComb_gen);
-  
-  // hpp_JetComb_reco->Add(hpp_Jet80_reco);
-  // hpp_JetComb_reco->Add(hpp_Jet60_reco);
-  // hpp_JetComb_reco->Add(hpp_Jet40_reco);
-
-  // divideBinWidth(hpp_JetComb_reco);
-  
-  // hpp_JetComb_gen->Add(hpp_Jet80_gen);
-  // hpp_JetComb_gen->Add(hpp_Jet60_gen);
-  // hpp_JetComb_gen->Add(hpp_Jet40_gen);
-
-  // divideBinWidth(hpp_JetComb_gen);
-
-  // hpp_anaBin_JetComb_reco->Add(hpp_anaBin_Jet80_reco);
-  // hpp_anaBin_JetComb_reco->Add(hpp_anaBin_Jet60_reco);
-  // hpp_anaBin_JetComb_reco->Add(hpp_anaBin_Jet40_reco);
-
-  // divideBinWidth(hpp_anaBin_JetComb_reco);
-  
-  // hpp_anaBin_JetComb_gen->Add(hpp_anaBin_Jet80_gen);
-  // hpp_anaBin_JetComb_gen->Add(hpp_anaBin_Jet60_gen);
-  // hpp_anaBin_JetComb_gen->Add(hpp_anaBin_Jet40_gen);
-
-  // divideBinWidth(hpp_anaBin_JetComb_gen);
-
   fout->Write();
   
   timer.Stop();
