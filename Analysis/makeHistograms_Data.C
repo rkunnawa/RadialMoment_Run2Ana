@@ -103,13 +103,13 @@ void makeHistograms_Data(int startfile = 0,
 
   gStyle->SetOptStat(0);
 
-  bool printDebug = true;
+  bool printDebug = false;
   if(printDebug)cout<<"radius = "<<radius<<endl;
   
   TDatime date;
 
   std::string infile_Forest;
-  infile_Forest = "PRForest_PAEGJet.txt";
+  infile_Forest = "list.txt";
   std::ifstream instr_Forest(infile_Forest.c_str(),std::ifstream::in);
   std::string filename_Forest;
   
@@ -331,21 +331,36 @@ void makeHistograms_Data(int startfile = 0,
   TH1F * hjteta = new TH1F("hjteta","", 100, -5, 5);
   TH1F * hjtphi = new TH1F("hjtphi","", 100, -4, 4);
   TH1F * hjtm = new TH1F("hjtm","", 50, 0, 50);
-  TH1F * hCHF = new TH1F("hCHF","", 50, 0, 1);
-  TH1F * hNHF = new TH1F("hNHF","", 50, 0, 1);
-  TH1F * hCEF = new TH1F("hCEF","", 50, 0, 1);
-  TH1F * hNEF = new TH1F("hNEF","", 50, 0, 1);
-  TH1F * hMUF = new TH1F("hMUF","", 50, 0, 1);
+  TH1F * hCHF = new TH1F("hCHF","", 50, 0, 1.5);
+  TH1F * hNHF = new TH1F("hNHF","", 50, 0, 1.5);
+  TH1F * hCEF = new TH1F("hCEF","", 50, 0, 1.5);
+  TH1F * hNEF = new TH1F("hNEF","", 50, 0, 1.5);
+  TH1F * hMUF = new TH1F("hMUF","", 50, 0, 1.5);
   TH1F * hCHM = new TH1F("hCHM","", 70, 0, 70);
   TH1F * hNHM = new TH1F("hNHM","", 70, 0, 70);
   TH1F * hCEM = new TH1F("hCEM","", 70, 0, 70);
   TH1F * hNEM = new TH1F("hNEM","", 70, 0, 70);
   TH1F * hMUM = new TH1F("hMUM","", 70, 0, 70);
+  TH1F * hAj = new TH1F("hAj","",50, 0, 1);
+  //! 2D histograms with Aj vs different centrality variables
+  TH2F * hAjvshiBin = new TH2F("hAjvshiBin","", 200, 0, 200, 50, 0, 1);
+  TH2F * hAjvsNpix = new TH2F("hAjvsNpix","", 100, 0, 1200, 50, 0, 1);
+  TH2F * hAjvsHF = new TH2F("hAjvsHF","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsHFplus = new TH2F("hAjvsHFplus","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsHFminus = new TH2F("hAjvsHFminus","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsZDC = new TH2F("hAjvsZDC","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsZDCplus = new TH2F("hAjvsZDCplus","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsZDCminus = new TH2F("hAjvsZDCminus","", 500, 0, 500, 50, 0, 1);
+  TH2F * hAjvsHFhit = new TH2F("hAjvsHFhit","", 200, 0, 8000, 50, 0, 1);
+  TH2F * hAjvsHFhitplus = new TH2F("hAjvsHFhitplus","", 200, 0, 8000, 50, 0, 1);
+  TH2F * hAjvsHFhitminus = new TH2F("hAjvsHFhitminus","", 200, 0, 8000, 50, 0, 1);
+  TH2F * hAjvsNtracks = new TH2F("hAjvsNtracks","", 200, 0, 200, 50, 0, 1);
   
   //! now start the event loop for each file.  
   if(printDebug) cout<<"Running through all the events now"<<endl;
   Long64_t nentries = jetTree[0]->GetEntries();
-  if(printDebug) nentries = 25;
+  if(printDebug) nentries = 100;
+  
   for(int nEvt = 0; nEvt < nentries; ++ nEvt) {
 
     if(nEvt%10000 == 0)cout<<nEvt<<"/"<<nentries<<endl;
@@ -361,7 +376,7 @@ void makeHistograms_Data(int startfile = 0,
     if(!jet40_F && !jet60_F && !jet80_F)
       continue;
     
-    double ev_weight = 1.0;
+    double ev_weight = 0.0;
     double maxTrigpT = 0.0;
     if(trgObjpt_40->size()>0){
       for(unsigned it = 0; it<trgObjpt_40->size(); ++it){
@@ -407,10 +422,19 @@ void makeHistograms_Data(int startfile = 0,
     hHFhitminus->Fill(hiHFhitminus_F, ev_weight);
     hNtracks->Fill(hiNtracks_F, ev_weight);
 
+    double ptlead = 0.0;
+    double ptsublead = 0.0;
+    int counter = 0;
+
     //! Loop over the jets 
     for(int jet = 0; jet<nref_F; ++jet){
       //! no JetID at the moment
       if(fabs(eta_F[jet])>3.0) continue;
+
+      if(counter == 0) ptlead = pt_F[jet];
+      if(counter == 1) ptsublead = pt_F[jet];
+      counter++;
+      
       hjtpt->Fill(pt_F[jet], ev_weight);
       hjteta->Fill(eta_F[jet], ev_weight);
       hjtphi->Fill(phi_F[jet], ev_weight);
@@ -426,7 +450,25 @@ void makeHistograms_Data(int startfile = 0,
       hNEM->Fill(jtPfNEM_F[jet], ev_weight);
       hMUM->Fill(jtPfMUM_F[jet], ev_weight);
     }// jet loop
-
+    
+    double Aj = 0.0;
+    if(ptlead!=0.0 && ptsublead!=0.0){
+      Aj = (double)(ptlead - ptsublead)/(ptlead + ptsublead);
+      hAj->Fill(Aj, ev_weight);
+      hAjvshiBin->Fill(hiBin_F, Aj, ev_weight);
+      hAjvsNpix->Fill(hiNpix_F, Aj, ev_weight);
+      hAjvsNtracks->Fill(hiNtracks_F, Aj, ev_weight);
+      hAjvsHF->Fill(hiHF_F, Aj, ev_weight);
+      hAjvsHFplus->Fill(hiHFplus_F, Aj, ev_weight);
+      hAjvsHFminus->Fill(hiHFminus_F, Aj, ev_weight);
+      hAjvsZDC->Fill(hiZDC_F, Aj, ev_weight);
+      hAjvsZDCplus->Fill(hiZDCplus_F, Aj, ev_weight);
+      hAjvsZDCminus->Fill(hiZDCminus_F, Aj, ev_weight);
+      hAjvsHFhit->Fill(hiHFhit_F, Aj, ev_weight);
+      hAjvsHFhitplus->Fill(hiHFhitplus_F, Aj, ev_weight);
+      hAjvsHFhitminus->Fill(hiHFhitminus_F, Aj, ev_weight);
+    }
+    
     if(printDebug)cout<<endl;
 
   }// event loop
