@@ -101,11 +101,11 @@ std::string moments[] = {"halfMoment", "firstMoment", "secondMoment", "thirdMome
 using namespace std;
 
 void makeHistograms_Data(int startfile = 0,
-			 int endfile = 1,
+			 int endfile = 10,
 			 int radius = 4,
 			 std::string algo="",
 			 std::string jetType= "PF",
-			 std::string kfoutname="test.root"){
+			 std::string kfoutname="pPb_5p02TeV_MinBias_ak4PF.root"){
   
   TStopwatch timer;
   timer.Start();
@@ -121,7 +121,7 @@ void makeHistograms_Data(int startfile = 0,
   TDatime date;
 
   std::string infile_Forest;
-  infile_Forest = "pPb_8TeV_DataForests.txt";
+  infile_Forest = "pPb_MinBias5TeV_forests.txt";
   std::ifstream instr_Forest(infile_Forest.c_str(),std::ifstream::in);
   std::string filename_Forest;
   
@@ -244,6 +244,7 @@ void makeHistograms_Data(int startfile = 0,
   jetTree[2]->SetBranchAddress("jtpu",&jtpu_F);
   jetTree[2]->SetBranchAddress("jtm",&m_F);
   jetTree[2]->SetBranchAddress("jtarea",&jtarea_F);
+  /*
   jetTree[2]->SetBranchAddress("jtnCands",&jtnCands_F);
   jetTree[2]->SetBranchAddress("jtnChCands",&jtnChCands_F);
   jetTree[2]->SetBranchAddress("jtnNeCands",&jtnNeCands_F);
@@ -266,6 +267,7 @@ void makeHistograms_Data(int startfile = 0,
   jetTree[2]->SetBranchAddress("jtSDrm1",&jtSDrm1_F);
   jetTree[2]->SetBranchAddress("jtSDrm2",&jtSDrm2_F);
   jetTree[2]->SetBranchAddress("jtSDrm3",&jtSDrm3_F);
+  */
   
   //! pf jet variables
   float chMax_F[1000];
@@ -426,6 +428,7 @@ void makeHistograms_Data(int startfile = 0,
   TH2F * hAjvsHFhitminus = new TH2F("hAjvsHFhitminus","", 200, 0, 8000, 50, 0, 1);
   TH2F * hAjvsNtracks = new TH2F("hAjvsNtracks","", 200, 0, 200, 50, 0, 1);
 
+  /*
   //! declare the histograms 
   TH1F * hJetConst_ungrm[_ncentbins][_nptbins][_netabins][_nbeta];  
   TH1F * hJetConst_grm[_ncentbins][_nptbins][_netabins][_nbeta];
@@ -462,6 +465,7 @@ void makeHistograms_Data(int startfile = 0,
       }
     }
   }
+  */
   
   //! now start the event loop for each file.  
   if(printDebug) cout<<"Running through all the events now"<<endl;
@@ -480,37 +484,38 @@ void makeHistograms_Data(int startfile = 0,
     if(fabs(vz_F)>15 || !pprimaryvertexFilter_F ||
        !pVertexFilterCutGplus_F || !pHBHENoiseFilter_F)
       continue;
-    if(!jet40_F && !jet60_F && !jet80_F)
-      continue;
+    if(pt_F[0]<20) continue;
+    // if(!jet40_F && !jet60_F && !jet80_F)
+    //   continue;
     
-    double ev_weight = 0.0;
-    double maxTrigpT = 0.0;
-    if(trgObjpt_40->size()>0){
-      for(unsigned it = 0; it<trgObjpt_40->size(); ++it){
-	if(maxTrigpT < trgObjpt_40->at(it))
-	  maxTrigpT = trgObjpt_40->at(it);
-      }
-    }
-    if(trgObjpt_60->size()>0){
-      for(unsigned it = 0; it<trgObjpt_60->size(); ++it){
-	if(maxTrigpT < trgObjpt_60->at(it))
-	  maxTrigpT = trgObjpt_60->at(it);
-      }
-    }
-    if(trgObjpt_80->size()>0){
-      for(unsigned it = 0; it<trgObjpt_80->size(); ++it){
-	if(maxTrigpT < trgObjpt_80->at(it))
-	  maxTrigpT = trgObjpt_80->at(it);
-      }
-    }
+    double ev_weight = 1.0;
+    // double maxTrigpT = 0.0;
+    // if(trgObjpt_40->size()>0){
+    //   for(unsigned it = 0; it<trgObjpt_40->size(); ++it){
+    // 	if(maxTrigpT < trgObjpt_40->at(it))
+    // 	  maxTrigpT = trgObjpt_40->at(it);
+    //   }
+    // }
+    // if(trgObjpt_60->size()>0){
+    //   for(unsigned it = 0; it<trgObjpt_60->size(); ++it){
+    // 	if(maxTrigpT < trgObjpt_60->at(it))
+    // 	  maxTrigpT = trgObjpt_60->at(it);
+    //   }
+    // }
+    // if(trgObjpt_80->size()>0){
+    //   for(unsigned it = 0; it<trgObjpt_80->size(); ++it){
+    // 	if(maxTrigpT < trgObjpt_80->at(it))
+    // 	  maxTrigpT = trgObjpt_80->at(it);
+    //   }
+    // }
 
-    int presclDes[] = {jet40_F, jet60_F, jet80_F};
-    int presclWgt[] = {jet40_p_F, jet60_p_F, jet80_p_F};
+    // int presclDes[] = {jet40_F, jet60_F, jet80_F};
+    // int presclWgt[] = {jet40_p_F, jet60_p_F, jet80_p_F};
     
-    ev_weight = eventPrescl(presclDes, presclWgt, maxTrigpT);
-    if(printDebug){
-      cout<<"Prescl weight = "<<ev_weight<<endl;
-    }
+    // ev_weight = eventPrescl(presclDes, presclWgt, maxTrigpT);
+    // if(printDebug){
+    //   cout<<"Prescl weight = "<<ev_weight<<endl;
+    // }
     // ev_weight = 1.0;
 
     //! fill in the event histograms
@@ -549,11 +554,11 @@ void makeHistograms_Data(int startfile = 0,
       if(pt_F[jet] < 20.) continue;
 
       if(counter == 0) {
-	ptlead = recpt;
-	etalead = receta;
+	ptlead = pt_F[jet];
+	etalead = eta_F[jet];
       }else if(counter == 1) {
-	ptsublead = recpt;
-	etasublead = receta;
+	ptsublead = pt_F[jet];
+	etasublead = eta_F[jet];
       }
       counter++;
       
@@ -597,7 +602,8 @@ void makeHistograms_Data(int startfile = 0,
       }
       if(etabin == -1)
 	continue;      
-      
+
+      /*
       hJetMass_ungrm[centbin][ptbin][etabin]->Fill(m_F[jet], ev_weight);  
       hJetMass_grm[centbin][ptbin][etabin]->Fill(jtSDm_F[jet], ev_weight);
       hJetMass_vs_pt_ungrm[centbin][ptbin][etabin]->Fill(pt_F[jet], m_F[jet], ev_weight);
@@ -634,11 +640,12 @@ void makeHistograms_Data(int startfile = 0,
       hJetMass_vs_RadMom_grm[centbin][ptbin][etabin][3]->Fill(jtSDrm3_F[jet], jtSDm_F[jet], ev_weight);
       hJetMoment_vs_pt_ungrm[centbin][ptbin][etabin][3]->Fill(pt_F[jet], jtrm3_F[jet], ev_weight);
       hJetMoment_vs_pt_grm[centbin][ptbin][etabin][3]->Fill(pt_F[jet], jtSDrm3_F[jet], ev_weight);        
-      
+      */
     }// jet loop
     
     double Aj = 0.0;
     double dijeteta = 0.0;
+    
     if(ptlead!=0.0 && ptsublead!=0.0){
       Aj = (double)(ptlead - ptsublead)/(ptlead + ptsublead);
       hAj->Fill(Aj, ev_weight);

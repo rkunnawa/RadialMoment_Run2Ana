@@ -13,17 +13,17 @@ print
 # location of output in eos
 outdir="root://eosuser.cern.ch://eos/user/r/rkunnawa/Run2_pPbData/"
 # number of jobs to be submitted
-NumberOfJobs= 241
+NumberOfJobs= 10
 # number files to be processed in a single job, take care to split your file so that you run on all files. The last job might be with smaller number of files (the ones that remain).
-interval = 34
+interval = 10
 # base of the output file name, they will be saved in res directory
-OutputFileNames = "pPbData_histograms"
+OutputFileNames = "pPbData_MinBias_8TeV_histograms"
 radius=4
 algo=""
 jettype="PF"
 # script to be used with cmsRun
-FileList = "PRForest_PAEGJet.txt" # list with all the file directories
-queue = "1nw" # give bsub queue -- 8nm (8 minutes), 1nh (1 hour), 8nh, 1nd (1day), 2nd, 1nw (1 week), 2nw 
+FileList = "pPb_MinBias8TeV_forests.txt" # list with all the file directories
+queue = "2nd" # give bsub queue -- 8nm (8 minutes), 1nh (1 hour), 8nh, 1nd (1day), 2nd, 1nw (1 week), 2nw 
 ########   customization end   #########
 
 path = os.getcwd()
