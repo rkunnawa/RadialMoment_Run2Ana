@@ -58,12 +58,6 @@ const double etabins_jec[] = {-5.191, -4.889, -4.716, -4.538, -4.363, -4.191, -4
 };
 const int nbins_eta_jec = sizeof(etabins_jec)/sizeof(double) -1;
 
-double ptbins_ana[] = {20.0, 30.0, 50.0, 100.0, 150.0, 200.0, 300.0, 600.0};
-const int nbins_pt_ana = sizeof(ptbins_ana)/sizeof(double)-1;
-
-double etabins_ana[] = {-3.0, -1.0, 1.0, 3.0};
-const int nbins_eta_ana = sizeof(etabins_ana)/sizeof(double)-1; 
-
 static const int trigValue = 4;
 static const char trigName [trigValue][256] = {"HLT40","HLT60","HLT80","Combined"};
 
@@ -92,32 +86,46 @@ float deltaphi(float phi1, float phi2)
   return TMath::Abs(dphi);
 }
 
-// double pthatWeight(double pthat, double xsec){
-//   // no of events in pthat = 15 = 882122
-//   // no of events in pthat = 30 = 884958
-//   // no of events in pthat = 50 = 961144
-//   // no of events in pthat = 80 = 1461062
-//   // no of events in pthat = 120 = 930335
-//   // no of events in pthat = 170 = 869197
-//   // no of events in pthat = 220 = 948601
-//   // no of events in pthat = 280 = 1451845
-//   // no of events in pthat = 370 = 1369736
-//   double pthatWeight = 0.0;
-//   const int nEventspthats[] = {882122, 884958, 961144,
-// 			       1461062, 930335, 869197,
-// 			       948601, 1451845, 1369736};
-//   const int nPthats = 9;
-//   int pthats[] = {15, 30, 50, 80, 120, 170, 220, 280, 370, 9999};
-//   int eventPthat = 0;
-//   for(int i = 0; i<9; ++i){
-//     if(pthat > pthats[i] && pthat < pthats[i+1])
-//       eventPthat = i;
-//   }
-//   pthatWeight = (double)xsec/nEventspthats[eventPthat];
-//   return pthatWeight;
+double pthatWeight(int startfile = 0){
+  // no of events in pthat = 15 = 882122
+  // average xsec = 9.56700e+08
+  // no of events in pthat = 30 = 823309
+  // average xsec = 7.27938e+07
+  // no of events in pthat = 50 = 848247
+  // average xsec = 9.84034e+06
+  // no of events in pthat = 80 = 834909
+  // average xsec = 1.37397e+06
+  // no of events in pthat = 120 = 713842
+  // average xsec = 2.27780e+05
+  // no of events in pthat = 170 = 707705
+  // average xsec = 4.28366e+04
+  // no of events in pthat = 220 = 707090
+  // average xsec = 1.28229e+04
+  // no of events in pthat = 280 = 766705
+  // average xsec = 3.28043e+03
+  // no of events in pthat = 370 = 957400
+  // average xsec = 7.57785e+02
 
-// }
+  // double pthatWeight[] = {9.56700e+08/882122, 7.27938e+07/823309,
+  // 			  9.84034e+06/848247, 1.37397e+06/834909,
+  // 			  2.27780e+05/713842, 4.28366e+04/707705,
+  // 			  1.28229e+04/707090, 3.28043e+03/766705,
+  // 			  7.57785e+02/957400};  
+  // return pthatWeight[startfile];
+  //! In the new files I made:
+  //! pthat 80:
+  // number of events: 71557
+  // average xsec = 1.32722e+06
+  // return (double)1.32722e+06/71557;
+  //! In the new files I made:
+  //! pthat 170:
+  // number of events: 994000
+  // average xsec = 
+  return (double)44784.9/994000;
+  
+}
 
+const double pthatbins[] = {15.0, 30.0, 50.0, 80.0, 120.0, 170.0, 220.0, 280.0, 370.0, 99999};
 
 using namespace std;
 
@@ -126,7 +134,7 @@ void makeHistograms_MC(int startfile = 0,
 		       int radius = 4,
 		       std::string algo="",
 		       std::string jetType= "PF",
-		       std::string kfoutname="test.root"){
+		       std::string kfoutname="pPb_MinBias8TeV_test.root"){
   
   TStopwatch timer;
   timer.Start();
@@ -143,7 +151,7 @@ void makeHistograms_MC(int startfile = 0,
 
   std::string infile_Forest;
 
-  infile_Forest = "pPb_8TeV_MCForests.txt";
+  infile_Forest = "EPOSpPb_MinBias_5TeV_forests.txt";
   std::ifstream instr_Forest(infile_Forest.c_str(),std::ifstream::in);
   std::string filename_Forest;  
 
@@ -152,23 +160,12 @@ void makeHistograms_MC(int startfile = 0,
     instr_Forest>>filename_Forest;
   }
 
-  const int N = 5; //6
+  const int N = 5; 
   TChain * jetTree[N];
   
-  string dir[N];
-  dir[0] = "hltanalysis";
-  dir[1] = "skimanalysis";
-  dir[2] = Form("ak%s%d%sJetAnalyzer", algo.c_str(), radius, jetType.c_str());
-  dir[3] = "hiEvtAnalyzer";
-  dir[4] = "runAnalyzer";
+  string dir[N] = {"hltanalysis", "skimanalysis", Form("ak%s%d%sJetAnalyzer", algo.c_str(), radius, jetType.c_str()), "hiEvtAnalyzer", "runAnalyzer"};
 
-  string trees[N] = {
-    "HltTree",
-    "HltTree",
-    "t",
-    "HiTree",
-    "run"
-  };
+  string trees[N] = {"HltTree","HltTree","t","HiTree","run"};
 
   for(int t = 0;t<N;t++){
     jetTree[t] = new TChain(string(dir[t]+"/"+trees[t]).data());
@@ -201,12 +198,12 @@ void makeHistograms_MC(int startfile = 0,
   int jet40_p_l1_F;
   int jet60_p_l1_F;
   int jet80_p_l1_F;
-  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet40_Eta5p1_v2",&jet40_F);
-  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet40_Eta5p1_v2_Prescl",&jet40_p_F);
-  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet60_Eta5p1_v2",&jet60_F);
-  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet60_Eta5p1_v2_Prescl",&jet60_p_F);
-  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet80_Eta5p1_v2",&jet80_F);
-  jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet80_Eta5p1_v2_Prescl",&jet80_p_F);
+  // jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet40_Eta5p1_v2",&jet40_F);
+  // jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet40_Eta5p1_v2_Prescl",&jet40_p_F);
+  // jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet60_Eta5p1_v2",&jet60_F);
+  // jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet60_Eta5p1_v2_Prescl",&jet60_p_F);
+  // jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet80_Eta5p1_v2",&jet80_F);
+  // jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet80_Eta5p1_v2_Prescl",&jet80_p_F);
   // jetTree[0]->SetBranchAddress("L1_SingleJet16_BptxAND_Final",&jet40_l1_F);
   // jetTree[0]->SetBranchAddress("L1_SingleJet16_BptxAND_Prescl",&jet40_p_l1_F);
   // jetTree[0]->SetBranchAddress("L1_SingleJet24_BptxAND_Final",&jet60_l1_F);
@@ -368,8 +365,19 @@ void makeHistograms_MC(int startfile = 0,
   TH1F * hjtpt = new TH1F("hjtpt","", 500, 0, 1000);
   TH1F * hrefpt = new TH1F("hrefpt","",500, 0, 1000);
   TH1F * hjteta = new TH1F("hjteta","", 100, -5, 5);
+  TH1F * hdijeteta = new TH1F("hdijeteta","",100, -5, 5);
   TH1F * hjtphi = new TH1F("hjtphi","", 100, -4, 4);
   TH1F * hjtm = new TH1F("hjtm","", 50, 0, 50);
+  TH1F * hChSumoverRawpT = new TH1F("hChSumoverRawpT","",50, 0, 1.5);
+  TH1F * hChMaxoverRawpT = new TH1F("hChMaxoverRawpT","",50, 0, 1.5);
+  TH1F * hNeSumoverRawpT = new TH1F("hNeSumoverRawpT","",50, 0, 1.5);
+  TH1F * hNeMaxoverRawpT = new TH1F("hNeMaxoverRawpT","",50, 0, 1.5);
+  TH1F * hPhSumoverRawpT = new TH1F("hPhSumoverRawpT","",50, 0, 1.5);
+  TH1F * hPhMaxoverRawpT = new TH1F("hPhMaxoverRawpT","",50, 0, 1.5);
+  TH1F * hElSumoverRawpT = new TH1F("hElSumoverRawpT","",50, 0, 1.5);
+  TH1F * hElMaxoverRawpT = new TH1F("hElMaxoverRawpT","",50, 0, 1.5);
+  TH1F * hMuSumoverRawpT = new TH1F("hMuSumoverRawpT","",50, 0, 1.5);
+  TH1F * hMuMaxoverRawpT = new TH1F("hMuMaxoverRawpT","",50, 0, 1.5);
   TH1F * hCHF = new TH1F("hCHF","", 50, 0, 1.5);
   TH1F * hNHF = new TH1F("hNHF","", 50, 0, 1.5);
   TH1F * hCEF = new TH1F("hCEF","", 50, 0, 1.5);
@@ -421,21 +429,26 @@ void makeHistograms_MC(int startfile = 0,
     if(fabs(vz_F)>15 || !pprimaryvertexFilter_F ||
        !pVertexFilterCutGplus_F || !pHBHENoiseFilter_F)
       continue;
-    if(!jet40_F && !jet60_F && !jet80_F)
-      continue;
+    // if(!jet40_F && !jet60_F && !jet80_F)
+    //   continue;
+    // if(pthat_F < pthatbins[startfile] || pthat_F >= pthatbins[endfile])
+    //   continue;
     
-    double ev_weight = 0.0;
-    ev_weight = pthatWeight(pthat_F, xsec_F);
+    double ev_weight = 1.0;
+    // ev_weight = pthatWeight(startfile);
 
     double ptlead = 0.0;
+    double etalead = 0.0;
     double ptsublead = 0.0;
+    double etasublead = 0.0;
     int counter = 0;
     
     for(int jet = 0; jet<nref_F; ++jet){
 
       if(fabs(eta_F[jet]) > 3.0) continue;
       if(subid_F[jet] != 0) continue;
-      if(pt_F[jet] > 3 * pthat_F) continue;
+      // if(pt_F[jet] > 3 * pthat_F) continue;
+      if(pt_F[jet] < 20.) continue;
       if(refdrjt_F[jet] > (float)radius/10) continue; 
 
       double genpt = refpt_F[jet];
@@ -443,8 +456,13 @@ void makeHistograms_MC(int startfile = 0,
       double receta = eta_F[jet];
       double rawpt = rawpt_F[jet];
 
-      if(counter == 0) ptlead = recpt;
-      if(counter == 1) ptsublead = recpt;
+      if(counter == 0) {
+	ptlead = recpt;
+	etalead = receta;
+      }else if(counter == 1) {
+	ptsublead = recpt;
+	etasublead = receta;
+      }
       counter++;
       
       int etabin = -1;      
@@ -467,6 +485,16 @@ void makeHistograms_MC(int startfile = 0,
       hjteta->Fill(eta_F[jet], ev_weight);
       hjtphi->Fill(phi_F[jet], ev_weight);
       hjtm->Fill(m_F[jet], ev_weight);
+      hChSumoverRawpT->Fill(chSum_F[jet]/rawpt_F[jet], ev_weight);
+      hChMaxoverRawpT->Fill(chMax_F[jet]/rawpt_F[jet], ev_weight);
+      hNeSumoverRawpT->Fill(neSum_F[jet]/rawpt_F[jet], ev_weight);
+      hNeMaxoverRawpT->Fill(neMax_F[jet]/rawpt_F[jet], ev_weight);
+      hPhSumoverRawpT->Fill(phSum_F[jet]/rawpt_F[jet], ev_weight);
+      hPhMaxoverRawpT->Fill(phMax_F[jet]/rawpt_F[jet], ev_weight);
+      hElSumoverRawpT->Fill(eSum_F[jet]/rawpt_F[jet], ev_weight);
+      hElMaxoverRawpT->Fill(eMax_F[jet]/rawpt_F[jet], ev_weight);
+      hMuSumoverRawpT->Fill(muSum_F[jet]/rawpt_F[jet], ev_weight);
+      hMuMaxoverRawpT->Fill(muMax_F[jet]/rawpt_F[jet], ev_weight);
       hCHF->Fill(jtPfCHF_F[jet], ev_weight);
       hNHF->Fill(jtPfNHF_F[jet], ev_weight);
       hCEF->Fill(jtPfCEF_F[jet], ev_weight);
@@ -495,9 +523,12 @@ void makeHistograms_MC(int startfile = 0,
     hNtracks->Fill(hiNtracks_F, ev_weight);
 
     double Aj = 0.0;
+    double dijeteta = 0.0;
     if(ptlead!=0.0 && ptsublead!=0.0){
       Aj = (double)(ptlead - ptsublead)/(ptlead + ptsublead);
       hAj->Fill(Aj, ev_weight);
+      dijeteta = (etalead + etasublead)/2;
+      hdijeteta->Fill(dijeteta, ev_weight);
       hAjvshiBin->Fill(hiBin_F, Aj, ev_weight);
       hAjvsNpix->Fill(hiNpix_F, Aj, ev_weight);
       hAjvsNtracks->Fill(hiNtracks_F, Aj, ev_weight);
