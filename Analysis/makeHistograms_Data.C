@@ -40,12 +40,6 @@
 #include "TMath.h"
 #include "TLine.h"
 
-double ptbins_ana[] = {20.0, 30.0, 50.0, 100.0, 150.0, 200.0, 300.0, 600.0};
-const int nbins_pt_ana = sizeof(ptbins_ana)/sizeof(double)-1;
-
-double etabins_ana[] = {-3.0, -1.0, 1.0, 3.0};
-const int nbins_eta_ana = sizeof(etabins_ana)/sizeof(double)-1; 
-
 static const int trigValue = 4;
 static const char trigName [trigValue][256] = {"HLT40","HLT60","HLT80","Combined"};
 
@@ -85,7 +79,25 @@ double eventPrescl(int *trgDec, int *treePrescl, double triggerPt){
   return weight;
 }
 
+int _centedges[] = {0, 40, 80, 120, 200};
+const int _ncentbins = sizeof(_centedges)/sizeof(int)-1;
+std::string centbins[] = {"0_cent_20", "20_cent_40", "40_cent_60", "60_cent_100"};
 
+double _ptedges[] = {50., 100., 300., 500, 2000.};
+const int _nptbins = sizeof(_ptedges)/sizeof(double)-1;
+std::string ptbins[] = {"50_pt_100", "100_pt_300", "300_pt_500", "pt_gt500"};
+  
+double _etaedges[] = {-3.5, -2.0, -0.5, 0.5, 2.0, 3.5};
+const int _netabins = sizeof(_etaedges)/sizeof(double)-1;
+std::string etabins[] = {"m3p5_eta_m2p0", "m2p0_eta_m0p5",
+			 "m0p5_eta_p0p5",
+			 "p0p5_eta_p2p0", "p2p0_eta_3p5"};
+
+double _betaValues[] = {0.5, 1., 2., 3.};
+double _radMomMax[] = {0.8, 0.5, 0.3, 0.05};
+const int _nbeta = sizeof(_betaValues)/sizeof(double);
+std::string moments[] = {"halfMoment", "firstMoment", "secondMoment", "thirdMoment"};
+    
 using namespace std;
 
 void makeHistograms_Data(int startfile = 0,
@@ -109,7 +121,7 @@ void makeHistograms_Data(int startfile = 0,
   TDatime date;
 
   std::string infile_Forest;
-  infile_Forest = "list.txt";
+  infile_Forest = "pPb_8TeV_DataForests.txt";
   std::ifstream instr_Forest(infile_Forest.c_str(),std::ifstream::in);
   std::string filename_Forest;
   
@@ -180,12 +192,12 @@ void makeHistograms_Data(int startfile = 0,
   jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet60_Eta5p1_v4_Prescl",&jet60_p_F);
   jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet80_Eta5p1_v3",&jet80_F);
   jetTree[0]->SetBranchAddress("HLT_PAAK4PFJet80_Eta5p1_v3_Prescl",&jet80_p_F);
-  jetTree[0]->SetBranchAddress("L1_SingleJet16_BptxAND_Final",&jet40_l1_F);
-  jetTree[0]->SetBranchAddress("L1_SingleJet16_BptxAND_Prescl",&jet40_p_l1_F);
-  jetTree[0]->SetBranchAddress("L1_SingleJet24_BptxAND_Final",&jet60_l1_F);
-  jetTree[0]->SetBranchAddress("L1_SingleJet24_BptxAND_Prescl",&jet60_p_l1_F);
-  jetTree[0]->SetBranchAddress("L1_SingleJet36_BptxAND_Final",&jet80_l1_F);
-  jetTree[0]->SetBranchAddress("L1_SingleJet36_BptxAND_Prescl",&jet80_p_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet16_BptxAND_Final",&jet40_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet16_BptxAND_Prescl",&jet40_p_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet24_BptxAND_Final",&jet60_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet24_BptxAND_Prescl",&jet60_p_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet36_BptxAND_Final",&jet80_l1_F);
+  // jetTree[0]->SetBranchAddress("L1_SingleJet36_BptxAND_Prescl",&jet80_p_l1_F);
   
   int pprimaryvertexFilter_F;
   int pVertexFilterCutGplus_F;
@@ -200,6 +212,62 @@ void makeHistograms_Data(int startfile = 0,
   float eta_F[1000];
   float phi_F[1000];
   float m_F[1000];
+  float jtpu_F[1000];
+  float jtarea_F[1000];
+  int jtnCands_F[1000];
+  int jtnChCands_F[1000];
+  int jtnNeCands_F[1000];
+  float jtMByPt_F[1000];
+  float jtRMSCand_F[1000];
+  float jtAxis1_F[1000];
+  float jtAxis2_F[1000];
+  float jtSigma_F[1000];
+  float jtR_F[1000];
+  float jtpTD_F[1000];
+  float jtrm0p5_F[1000];
+  float jtrm1_F[1000];
+  float jtrm2_F[1000];
+  float jtrm3_F[1000];
+  float jtpull_F[1000];
+  float jtSDm_F[1000];
+  float jtSDpt_F[1000];
+  float jtSDptFrac_F[1000];
+  float jtSDrm0p5_F[1000];
+  float jtSDrm1_F[1000];
+  float jtSDrm2_F[1000];
+  float jtSDrm3_F[1000];
+  jetTree[2]->SetBranchAddress("nref",&nref_F);
+  jetTree[2]->SetBranchAddress("jtpt",&pt_F);
+  jetTree[2]->SetBranchAddress("jteta",&eta_F);
+  jetTree[2]->SetBranchAddress("jtphi",&phi_F);
+  jetTree[2]->SetBranchAddress("rawpt",&rawpt_F);
+  jetTree[2]->SetBranchAddress("jtpu",&jtpu_F);
+  jetTree[2]->SetBranchAddress("jtm",&m_F);
+  jetTree[2]->SetBranchAddress("jtarea",&jtarea_F);
+  jetTree[2]->SetBranchAddress("jtnCands",&jtnCands_F);
+  jetTree[2]->SetBranchAddress("jtnChCands",&jtnChCands_F);
+  jetTree[2]->SetBranchAddress("jtnNeCands",&jtnNeCands_F);
+  jetTree[2]->SetBranchAddress("jtMByPt",&jtMByPt_F);
+  jetTree[2]->SetBranchAddress("jtRMSCand",&jtRMSCand_F);
+  jetTree[2]->SetBranchAddress("jtAxis1",&jtAxis1_F);
+  jetTree[2]->SetBranchAddress("jtAxis2",&jtAxis2_F);
+  jetTree[2]->SetBranchAddress("jtSigma",&jtSigma_F);
+  jetTree[2]->SetBranchAddress("jtR",&jtR_F);
+  jetTree[2]->SetBranchAddress("jtpTD",&jtpTD_F);
+  jetTree[2]->SetBranchAddress("jtpull",&jtpull_F);
+  jetTree[2]->SetBranchAddress("jtrm0p5",&jtrm0p5_F);
+  jetTree[2]->SetBranchAddress("jtrm1",&jtrm1_F);
+  jetTree[2]->SetBranchAddress("jtrm2",&jtrm2_F);
+  jetTree[2]->SetBranchAddress("jtrm3",&jtrm3_F);
+  jetTree[2]->SetBranchAddress("jtSDm",&jtSDm_F);
+  jetTree[2]->SetBranchAddress("jtSDpt",&jtSDpt_F);
+  jetTree[2]->SetBranchAddress("jtSDptFrac",&jtSDptFrac_F);
+  jetTree[2]->SetBranchAddress("jtSDrm0p5",&jtSDrm0p5_F);
+  jetTree[2]->SetBranchAddress("jtSDrm1",&jtSDrm1_F);
+  jetTree[2]->SetBranchAddress("jtSDrm2",&jtSDrm2_F);
+  jetTree[2]->SetBranchAddress("jtSDrm3",&jtSDrm3_F);
+  
+  //! pf jet variables
   float chMax_F[1000];
   int chN_F[1000];
   int neN_F[1000];
@@ -220,14 +288,6 @@ void makeHistograms_Data(int startfile = 0,
   float muMax_F[1000];
   float eSum_F[1000];
   float muSum_F[1000];
-  float jtpu_F[1000];
-  jetTree[2]->SetBranchAddress("nref",&nref_F);
-  jetTree[2]->SetBranchAddress("jtpt",&pt_F);
-  jetTree[2]->SetBranchAddress("jteta",&eta_F);
-  jetTree[2]->SetBranchAddress("jtphi",&phi_F);
-  jetTree[2]->SetBranchAddress("rawpt",&rawpt_F);
-  jetTree[2]->SetBranchAddress("jtpu",&jtpu_F);
-  jetTree[2]->SetBranchAddress("jtm",&m_F);
   jetTree[2]->SetBranchAddress("chargedMax",&chMax_F);
   jetTree[2]->SetBranchAddress("chargedSum",&chSum_F);
   jetTree[2]->SetBranchAddress("chargedN",&chN_F);
@@ -248,7 +308,6 @@ void makeHistograms_Data(int startfile = 0,
   jetTree[2]->SetBranchAddress("eMax",&eMax_F);
   jetTree[2]->SetBranchAddress("muSum",&muSum_F);
   jetTree[2]->SetBranchAddress("muMax",&muMax_F);
-  //! pf jet variables
   float jtPfCHF_F[1000];
   float jtPfNHF_F[1000];
   float jtPfCEF_F[1000];
@@ -329,8 +388,19 @@ void makeHistograms_Data(int startfile = 0,
   //! Jet histograms
   TH1F * hjtpt = new TH1F("hjtpt","", 500, 0, 1000);
   TH1F * hjteta = new TH1F("hjteta","", 100, -5, 5);
+  TH1F * hdijeteta = new TH1F("hdijeteta","",100, -5, 5);
   TH1F * hjtphi = new TH1F("hjtphi","", 100, -4, 4);
   TH1F * hjtm = new TH1F("hjtm","", 50, 0, 50);
+  TH1F * hChSumoverRawpT = new TH1F("hChSumoverRawpT","",50, 0, 1.5);
+  TH1F * hChMaxoverRawpT = new TH1F("hChMaxoverRawpT","",50, 0, 1.5);
+  TH1F * hNeSumoverRawpT = new TH1F("hNeSumoverRawpT","",50, 0, 1.5);
+  TH1F * hNeMaxoverRawpT = new TH1F("hNeMaxoverRawpT","",50, 0, 1.5);
+  TH1F * hPhSumoverRawpT = new TH1F("hPhSumoverRawpT","",50, 0, 1.5);
+  TH1F * hPhMaxoverRawpT = new TH1F("hPhMaxoverRawpT","",50, 0, 1.5);
+  TH1F * hElSumoverRawpT = new TH1F("hElSumoverRawpT","",50, 0, 1.5);
+  TH1F * hElMaxoverRawpT = new TH1F("hElMaxoverRawpT","",50, 0, 1.5);
+  TH1F * hMuSumoverRawpT = new TH1F("hMuSumoverRawpT","",50, 0, 1.5);
+  TH1F * hMuMaxoverRawpT = new TH1F("hMuMaxoverRawpT","",50, 0, 1.5);
   TH1F * hCHF = new TH1F("hCHF","", 50, 0, 1.5);
   TH1F * hNHF = new TH1F("hNHF","", 50, 0, 1.5);
   TH1F * hCEF = new TH1F("hCEF","", 50, 0, 1.5);
@@ -355,6 +425,43 @@ void makeHistograms_Data(int startfile = 0,
   TH2F * hAjvsHFhitplus = new TH2F("hAjvsHFhitplus","", 200, 0, 8000, 50, 0, 1);
   TH2F * hAjvsHFhitminus = new TH2F("hAjvsHFhitminus","", 200, 0, 8000, 50, 0, 1);
   TH2F * hAjvsNtracks = new TH2F("hAjvsNtracks","", 200, 0, 200, 50, 0, 1);
+
+  //! declare the histograms 
+  TH1F * hJetConst_ungrm[_ncentbins][_nptbins][_netabins][_nbeta];  
+  TH1F * hJetConst_grm[_ncentbins][_nptbins][_netabins][_nbeta];
+  TH1F * hJetMass_ungrm[_ncentbins][_nptbins][_netabins];  
+  TH1F * hJetMass_grm[_ncentbins][_nptbins][_netabins];
+  TH2F * hJetMass_vs_pt_ungrm[_ncentbins][_nptbins][_netabins];
+  TH2F * hJetMass_vs_pt_grm[_ncentbins][_nptbins][_netabins];  
+  TH1F * hJetGroomEffect[_ncentbins][_nptbins][_netabins];    
+  // TH2F * hJetConstDistribution_ungrm[_ncentbins][_nptbins][_netabins];
+  // TH2F * hJetConstDistribution_grm[_ncentbins][_nptbins][_netabins];
+  TH2F * hJetMass_vs_RadMom_ungrm[_ncentbins][_nptbins][_netabins][_nbeta];
+  TH2F * hJetMass_vs_RadMom_grm[_ncentbins][_nptbins][_netabins][_nbeta];
+  TH2F * hJetMoment_vs_pt_ungrm[_ncentbins][_nptbins][_netabins][_nbeta];
+  TH2F * hJetMoment_vs_pt_grm[_ncentbins][_nptbins][_netabins][_nbeta];  
+
+  for(size_t w = 0; w < _ncentbins; ++w){
+    for(size_t x = 0; x < _nptbins; ++x){
+      for(size_t y = 0; y < _netabins; ++y){
+	hJetGroomEffect[w][x][y] = new TH1F(Form("hJetGroomEffect_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()),"",100, 0, 1);
+	// hJetConstDistribution_ungrm[w][x][y] = new TH2F(Form("hJetConstDistribution_ungrm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()), "", 20*radius, 0, radius/10, 100, 0, 1);
+	// hJetConstDistribution_grm[w][x][y] = new TH2F(Form("hJetConstDistribution_grm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()), "", 20*radius, 0, radius/10, 100, 0, 1);
+	hJetMass_ungrm[w][x][y] = new TH1F(Form("hJetMass_ungrm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()), "", 50, 0, 50);
+	hJetMass_grm[w][x][y] = new TH1F(Form("hJetMass_grm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()), "", 50, 0, 50);
+	hJetMass_vs_pt_ungrm[w][x][y] = new TH2F(Form("hJetMass_vs_pt_ungrm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()), "", 150, 50, 600, 50, 0, 50);
+	hJetMass_vs_pt_grm[w][x][y] = new TH2F(Form("hJetMass_vs_pt_grm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()), "", 150, 50, 600, 50, 0, 50);
+	for(size_t z = 0; z < _nbeta; ++z){
+	  hJetConst_ungrm[w][x][y][z] = new TH1F(Form("hJetConst_ungrm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()),"",100, 0, _radMomMax[z]);
+	  hJetConst_grm[w][x][y][z] = new TH1F(Form("hJetConst_grm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()),"",100, 0, _radMomMax[z]);
+	  hJetMass_vs_RadMom_ungrm[w][x][y][z] = new TH2F(Form("hJetMass_vs_RadMom_ungrm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()),"", 100, 0, _radMomMax[z],50, 0, 50);
+	  hJetMass_vs_RadMom_grm[w][x][y][z] = new TH2F(Form("hJetMass_vs_RadMom_grm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()),"", 100, 0, _radMomMax[z],50, 0, 50);
+	  hJetMoment_vs_pt_ungrm[w][x][y][z] = new TH2F(Form("hJetMoment_vs_pt_ungrm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()),"", 150, 50, 600, 100, 0, _radMomMax[z]);
+	  hJetMoment_vs_pt_grm[w][x][y][z] = new TH2F(Form("hJetMoment_vs_pt_grm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()),"", 150, 50, 600, 100, 0, _radMomMax[z]);
+	}
+      }
+    }
+  }
   
   //! now start the event loop for each file.  
   if(printDebug) cout<<"Running through all the events now"<<endl;
@@ -398,14 +505,13 @@ void makeHistograms_Data(int startfile = 0,
     }
 
     int presclDes[] = {jet40_F, jet60_F, jet80_F};
-    int presclWgt[] = {jet40_p_F*jet40_p_l1_F,
-		       jet60_p_F*jet60_p_l1_F,
-		       jet80_p_F*jet80_p_l1_F};
+    int presclWgt[] = {jet40_p_F, jet60_p_F, jet80_p_F};
     
     ev_weight = eventPrescl(presclDes, presclWgt, maxTrigpT);
     if(printDebug){
       cout<<"Prescl weight = "<<ev_weight<<endl;
     }
+    // ev_weight = 1.0;
 
     //! fill in the event histograms
     hVz->Fill(vz_F, ev_weight);
@@ -423,22 +529,48 @@ void makeHistograms_Data(int startfile = 0,
     hNtracks->Fill(hiNtracks_F, ev_weight);
 
     double ptlead = 0.0;
+    double etalead = 0.0;
     double ptsublead = 0.0;
+    double etasublead = 0.0;
     int counter = 0;
 
+    int centbin = -1;
+    for(int bin = 0; bin<_ncentbins; ++bin){
+      if(hiBin_F >= _centedges[bin] && hiBin_F < _centedges[bin+1])
+	centbin = bin;
+    }
+    if(centbin == -1)
+      continue;
+    
     //! Loop over the jets 
     for(int jet = 0; jet<nref_F; ++jet){
       //! no JetID at the moment
       if(fabs(eta_F[jet])>3.0) continue;
+      if(pt_F[jet] < 20.) continue;
 
-      if(counter == 0) ptlead = pt_F[jet];
-      if(counter == 1) ptsublead = pt_F[jet];
+      if(counter == 0) {
+	ptlead = recpt;
+	etalead = receta;
+      }else if(counter == 1) {
+	ptsublead = recpt;
+	etasublead = receta;
+      }
       counter++;
       
       hjtpt->Fill(pt_F[jet], ev_weight);
       hjteta->Fill(eta_F[jet], ev_weight);
       hjtphi->Fill(phi_F[jet], ev_weight);
       hjtm->Fill(m_F[jet], ev_weight);
+      hChSumoverRawpT->Fill(chSum_F[jet]/rawpt_F[jet], ev_weight);
+      hChMaxoverRawpT->Fill(chMax_F[jet]/rawpt_F[jet], ev_weight);
+      hNeSumoverRawpT->Fill(neSum_F[jet]/rawpt_F[jet], ev_weight);
+      hNeMaxoverRawpT->Fill(neMax_F[jet]/rawpt_F[jet], ev_weight);
+      hPhSumoverRawpT->Fill(phSum_F[jet]/rawpt_F[jet], ev_weight);
+      hPhMaxoverRawpT->Fill(phMax_F[jet]/rawpt_F[jet], ev_weight);
+      hElSumoverRawpT->Fill(eSum_F[jet]/rawpt_F[jet], ev_weight);
+      hElMaxoverRawpT->Fill(eMax_F[jet]/rawpt_F[jet], ev_weight);
+      hMuSumoverRawpT->Fill(muSum_F[jet]/rawpt_F[jet], ev_weight);
+      hMuMaxoverRawpT->Fill(muMax_F[jet]/rawpt_F[jet], ev_weight);
       hCHF->Fill(jtPfCHF_F[jet], ev_weight);
       hNHF->Fill(jtPfNHF_F[jet], ev_weight);
       hCEF->Fill(jtPfCEF_F[jet], ev_weight);
@@ -449,12 +581,69 @@ void makeHistograms_Data(int startfile = 0,
       hCEM->Fill(jtPfCEM_F[jet], ev_weight);
       hNEM->Fill(jtPfNEM_F[jet], ev_weight);
       hMUM->Fill(jtPfMUM_F[jet], ev_weight);
+
+      int ptbin = -1;
+      for(int bin = 0; bin<_nptbins; ++bin){
+	if(pt_F[jet] >= _ptedges[bin] && pt_F[jet] < _ptedges[bin+1])
+	  ptbin = bin;
+      }
+      if(ptbin == -1)
+	continue;
+
+      int etabin = -1;
+      for(int bin = 0; bin<_netabins; ++bin){
+	if(eta_F[jet] >= _etaedges[bin] && eta_F[jet] < _etaedges[bin+1])
+	  etabin = bin;
+      }
+      if(etabin == -1)
+	continue;      
+      
+      hJetMass_ungrm[centbin][ptbin][etabin]->Fill(m_F[jet], ev_weight);  
+      hJetMass_grm[centbin][ptbin][etabin]->Fill(jtSDm_F[jet], ev_weight);
+      hJetMass_vs_pt_ungrm[centbin][ptbin][etabin]->Fill(pt_F[jet], m_F[jet], ev_weight);
+      hJetMass_vs_pt_grm[centbin][ptbin][etabin]->Fill(pt_F[jet], jtSDm_F[jet], ev_weight);  
+      hJetGroomEffect[centbin][ptbin][etabin]->Fill(jtSDpt_F[jet]/pt_F[jet], ev_weight);    
+      // hJetConstDistribution_ungrm[centbin][ptbin][etabin]->Fill(, ev_weight);
+      // hJetConstDistribution_grm[centbin][ptbin][etabin]->Fill(, ev_weight);
+
+      //! 0.5 radial moment
+      hJetConst_ungrm[centbin][ptbin][etabin][0]->Fill(jtrm0p5_F[jet], ev_weight);  
+      hJetConst_grm[centbin][ptbin][etabin][0]->Fill(jtSDrm0p5_F[jet], ev_weight);
+      hJetMass_vs_RadMom_ungrm[centbin][ptbin][etabin][0]->Fill(jtrm0p5_F[jet], m_F[jet], ev_weight);
+      hJetMass_vs_RadMom_grm[centbin][ptbin][etabin][0]->Fill(jtSDrm0p5_F[jet], jtSDm_F[jet], ev_weight);
+      hJetMoment_vs_pt_ungrm[centbin][ptbin][etabin][0]->Fill(pt_F[jet], jtrm0p5_F[jet], ev_weight);
+      hJetMoment_vs_pt_grm[centbin][ptbin][etabin][0]->Fill(pt_F[jet], jtSDrm0p5_F[jet], ev_weight);        
+      //! 1 radial moment
+      hJetConst_ungrm[centbin][ptbin][etabin][1]->Fill(jtrm1_F[jet], ev_weight);  
+      hJetConst_grm[centbin][ptbin][etabin][1]->Fill(jtSDrm1_F[jet], ev_weight);
+      hJetMass_vs_RadMom_ungrm[centbin][ptbin][etabin][1]->Fill(jtrm1_F[jet], m_F[jet], ev_weight);
+      hJetMass_vs_RadMom_grm[centbin][ptbin][etabin][1]->Fill(jtSDrm1_F[jet], jtSDm_F[jet], ev_weight);
+      hJetMoment_vs_pt_ungrm[centbin][ptbin][etabin][1]->Fill(pt_F[jet], jtrm1_F[jet], ev_weight);
+      hJetMoment_vs_pt_grm[centbin][ptbin][etabin][1]->Fill(pt_F[jet], jtSDrm1_F[jet], ev_weight);        
+      //! 2 radial moment
+      hJetConst_ungrm[centbin][ptbin][etabin][2]->Fill(jtrm2_F[jet], ev_weight);  
+      hJetConst_grm[centbin][ptbin][etabin][2]->Fill(jtSDrm2_F[jet], ev_weight);
+      hJetMass_vs_RadMom_ungrm[centbin][ptbin][etabin][2]->Fill(jtrm2_F[jet], m_F[jet], ev_weight);
+      hJetMass_vs_RadMom_grm[centbin][ptbin][etabin][2]->Fill(jtSDrm2_F[jet], jtSDm_F[jet], ev_weight);
+      hJetMoment_vs_pt_ungrm[centbin][ptbin][etabin][2]->Fill(pt_F[jet], jtrm2_F[jet], ev_weight);
+      hJetMoment_vs_pt_grm[centbin][ptbin][etabin][2]->Fill(pt_F[jet], jtSDrm2_F[jet], ev_weight);        
+      //! 3 radial moment
+      hJetConst_ungrm[centbin][ptbin][etabin][3]->Fill(jtrm3_F[jet], ev_weight);  
+      hJetConst_grm[centbin][ptbin][etabin][3]->Fill(jtSDrm3_F[jet], ev_weight);
+      hJetMass_vs_RadMom_ungrm[centbin][ptbin][etabin][3]->Fill(jtrm3_F[jet], m_F[jet], ev_weight);
+      hJetMass_vs_RadMom_grm[centbin][ptbin][etabin][3]->Fill(jtSDrm3_F[jet], jtSDm_F[jet], ev_weight);
+      hJetMoment_vs_pt_ungrm[centbin][ptbin][etabin][3]->Fill(pt_F[jet], jtrm3_F[jet], ev_weight);
+      hJetMoment_vs_pt_grm[centbin][ptbin][etabin][3]->Fill(pt_F[jet], jtSDrm3_F[jet], ev_weight);        
+      
     }// jet loop
     
     double Aj = 0.0;
+    double dijeteta = 0.0;
     if(ptlead!=0.0 && ptsublead!=0.0){
       Aj = (double)(ptlead - ptsublead)/(ptlead + ptsublead);
       hAj->Fill(Aj, ev_weight);
+      dijeteta = (etalead + etasublead)/2;
+      hdijeteta->Fill(dijeteta, ev_weight);
       hAjvshiBin->Fill(hiBin_F, Aj, ev_weight);
       hAjvsNpix->Fill(hiNpix_F, Aj, ev_weight);
       hAjvsNtracks->Fill(hiNtracks_F, Aj, ev_weight);

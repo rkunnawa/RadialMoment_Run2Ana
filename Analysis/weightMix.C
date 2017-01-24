@@ -61,25 +61,23 @@ void weightMix(){
 
   // int Npt = 11;
 
-  double pthatBins[] = {15       , 30       , 50       , 80       , 120      , 170      , 220      , 280      , 370      , 9999};
+  double pthatBins[] = {15.0       , 30.0       , 50.0       , 80.0       , 120.0      , 170.0      , 220.0      , 280.0      , 370.0      , 9999.0};
   // double xs[]        = {5.269E-01, 3.455E-02, 4.068E-03, 4.959E-04, 7.096E-05, 1.223E-05, 3.031E-06, 7.746E-07, 1.410E-07, 3.216E-08, 1.001E-08, 0.0};
   
   // double *xs;
   double *pthats;
   int n[9];
+  double avxsec[9];
 
   const int Npt = 9;
   // xs = xs2015;
   pthats = pthatBins;
 
-  // for(int i = 0; i < Npt-1; ++i){
-  //   xs[i] -= xs[i+1];
-  // }
-
-  TChain* nt;
+  TChain* nt, *xc;
   // TFile* outf[Nfiles];
 
   nt = new TChain("ak4PFJetAnalyzer/t");
+  xc = new TChain("runAnalyzer/run");
 
   std::string infile_Forest;
   infile_Forest = "pPb_8TeV_MCForests.txt";
@@ -90,15 +88,52 @@ void weightMix(){
   for(int ifile = 0; ifile<Nfiles; ++ifile){
     instr_Forest>>filename_Forest;
     nt->AddFile(filename_Forest.c_str());
+    xc->AddFile(filename_Forest.c_str());
     // filename_array[ifile] = filename_Forest.c_str();
   }
+  nt->AddFriend(xc);
 
-  cout<<"loaded all the files"<<endl;
-  
+  float pthat_F;
+  nt->SetBranchAddress("pthat", &pthat_F);
+  Float_t xsec_F;
+  xc->SetBranchAddress("xsec",&xsec_F);
+
   for(int i = 0; i < Npt; ++i){
-    TCut pthatCut(Form("pthat >= %f && pthat < %f",pthats[i],pthats[i+1]));
-    n[i] = nt->GetEntries(pthatCut);
-    cout<<"no of events in pthat = "<<pthats[i]<<" = "<<n[i]<<endl;
+    n[i] = 0;
+    avxsec[i] = 0.0;
+  }
+
+  // cout<<"Get the total number of events in the pthat ranges and the average xsec"<<endl;
+  // for(int i = 0; i<Npt-1; ++i){
+  //   cout<<"Total number of events in "<<pthats[i]<<" <= pthat < "<<pthats[i+1]<<" = "<<endl;
+  //   cout<<"         "<<nt->GetEntries(Form("pthat>=%2.2f && pthat<%2.2f", pthats[i], pthats[i+1]))<<endl;
+  //   TH1F * hxsec = new TH1F("hxsec","",100000, 1e3, 1e8);
+  //   nt->Draw("xsec>>hxsec",Form("pthat>=%2.2f && pthat<%2.2f", pthats[i], pthats[i+1]),"goff");
+  //   cout<<"         Average xsec = "<<hxsec->GetMean()<<endl;
+  // }
+    
+  Long64_t nentries = nt->GetEntries();
+  
+  for(int nEvt = 0; nEvt < nentries; ++ nEvt) {
+    if(nEvt%100000 == 0)cout<<nEvt<<"/"<<nentries<<endl;    
+    nt->GetEntry(nEvt);
+    xc->GetEntry(nEvt);    
+    //! find pthat bin of the event
+    int pthatbin = -1;
+    for(int i = 0; i < Npt-1; ++i){
+      if(pthat_F >= pthats[i] && pthat_F< pthats[i+1])
+	pthatbin = i;
+    }
+    if(pthatbin == -1) continue;
+    // cout<<"pthat = "<<pthat_F<<endl;
+    // cout<<"pthatbin = "<<pthatbin<<endl;
+    n[pthatbin]++;
+    avxsec[pthatbin]+=xsec_F;    
+  }
+  cout<<endl;
+  for(int i = 0; i < Npt; ++i){
+    double xsecmean = (double)avxsec[i]/n[i];
+    cout<<"Average value of xsec = "<<xsecmean<<" and no of events in pthat = "<<pthats[i]<<" = "<<n[i]<<endl;
   }
 
   /*
