@@ -9,8 +9,8 @@ void paperPlots()
   gStyle->SetOptStat(0);
   TH1::SetDefaultSumw2();
   TFile *fData, *fPY8, *fPY6;
-  fData = TFile::Open("rootfiles/radialMoment_8TeVData.root");
-  fPY6 = TFile::Open("rootfiles/radialmoment_PY6_pp8p16TeV.root");
+  fData = TFile::Open("../Analysis/pPb_8p16TeV_Data_ak4PF.root");
+  // fPY6 = TFile::Open("rootfiles/radialmoment_PY6_pp8p16TeV.root");
   // fPY8 = TFile::Open("rootfiles/radialmoment_PY8_pp8p16TeV.root");
 
   //! prepare the histograms!
@@ -21,17 +21,25 @@ void paperPlots()
   // TH2F * hPY6B2D[4][3][3][3];    
   // TH1F * hPY8[4][5][3][3][3];
 
-  double _ptedges[] = {50, 100, 300, 1000};
+  int _centedges[] = {0, 40, 80, 120, 200};
+  const int _ncentbins = sizeof(_centedges)/sizeof(int)-1;
+  std::string centbins[] = {"0_cent_20", "20_cent_40", "40_cent_60", "60_cent_100"};
+
+  double _ptedges[] = {50., 100., 300., 500, 2000.};
   const int _nptbins = sizeof(_ptedges)/sizeof(double)-1;
+  std::string ptbins[] = {"50_pt_100", "100_pt_300", "300_pt_500", "pt_gt500"};
   
-  double _trkedges[] = {0, 60, 120, 1000};
-  const int _ntrkbins = sizeof(_trkedges)/sizeof(double)-1;
-  
-  double _betaValues[] = {1, 2};
-  const int _nbeta = sizeof(_betaValues)/sizeof(double);
-  
-  double _etaedges[] = {-2.6, -0.4, 0.4, 2.6};
+  double _etaedges[] = {-3.5, -2.0, -0.5, 0.5, 2.0, 3.5};
   const int _netabins = sizeof(_etaedges)/sizeof(double)-1;
+  std::string etabins[] = {"m3p5_eta_m2p0", "m2p0_eta_m0p5",
+			   "m0p5_eta_p0p5",
+			   "p0p5_eta_p2p0", "p2p0_eta_3p5"};
+
+  double _betaValues[] = {0.5, 1., 2., 3.};
+  double _radMomMax[] = {0.8, 0.5, 0.3, 0.05};
+  const int _nbeta = sizeof(_betaValues)/sizeof(double);
+  std::string moments[] = {"halfMoment", "firstMoment", "secondMoment", "thirdMoment"};
+  std::string mass[] = {"Inclusive jet mass", "Inclusive groomed jet mass"};
 
   const int nRebin = 5;
   
@@ -39,105 +47,100 @@ void paperPlots()
   // std::string histoType1D[] = {"JetGroomEffect", "JetConst_ungrm", "JetConst_grm", "hJetMass_ungrm", "hJetMass_grm"};
   // const int _nHisto1D = sizeof(histoType1D)/sizeof(std::string);
   
-  TH1F * hData_Moment_grm[_ntrkbins][_nptbins][_netabins][_nbeta];
-  TH1F * hData_Moment_ungrm[_ntrkbins][_nptbins][_netabins][_nbeta];  
-  TH1F * hData_GroomEffect[_ntrkbins][_nptbins][_netabins];
-  TH1F * hData_Mass_grm[_ntrkbins][_nptbins][_netabins];
-  TH1F * hData_Mass_ungrm[_ntrkbins][_nptbins][_netabins];			    
-  TH1F * hPY6_Moment_grm[_ntrkbins][_nptbins][_netabins][_nbeta];
-  TH1F * hPY6_Moment_ungrm[_ntrkbins][_nptbins][_netabins][_nbeta];  
-  TH1F * hPY6_GroomEffect[_ntrkbins][_nptbins][_netabins];
-  TH1F * hPY6_Mass_grm[_ntrkbins][_nptbins][_netabins];
-  TH1F * hPY6_Mass_ungrm[_ntrkbins][_nptbins][_netabins];			    
+  TH1F * hData_Moment_grm[_ncentbins][_nptbins][_netabins][_nbeta];
+  TH1F * hData_Moment_ungrm[_ncentbins][_nptbins][_netabins][_nbeta];  
+  TH1F * hData_GroomEffect[_ncentbins][_nptbins][_netabins];
+  TH1F * hData_Mass_grm[_ncentbins][_nptbins][_netabins];
+  TH1F * hData_Mass_ungrm[_ncentbins][_nptbins][_netabins];			    
+  TH1F * hPY6_Moment_grm[_ncentbins][_nptbins][_netabins][_nbeta];
+  TH1F * hPY6_Moment_ungrm[_ncentbins][_nptbins][_netabins][_nbeta];  
+  TH1F * hPY6_GroomEffect[_ncentbins][_nptbins][_netabins];
+  TH1F * hPY6_Mass_grm[_ncentbins][_nptbins][_netabins];
+  TH1F * hPY6_Mass_ungrm[_ncentbins][_nptbins][_netabins];			    
   
-  std::string trkbins[] = {"0_ntrk_60", "60_ntrk_120", "ntrk_gt120"};
-  std::string ptbins[] = {"50_pt_100", "100_pt_300", "pt_gt300"};
-  std::string etabins[] = {"m2p6_eta_m0p4", "m0p4_eta_p0p4", "p0p4_eta_p2p6"};
-  std::string moments[] = {"firstMoment", "secondMoment"};
-  std::string mass[] = {"Inclusive jet mass", "Inclusive groomed jet mass"};
   //! 2D histograms 
   // std::string histoTypeA[] = {"JetConst_ungrm", "JetConst_grm", "hJetMass_vs_RadMom_ungrm", "hJetMass_vs_RadMom_grm", "hJetMoment_vs_pt_ungrm", "hJetMoment_vs_pt_grm"};
   // std::string histoTypeB[] = {"JetGroomEffect", "hJetMass_ungrm", "hJetMass_grm", "JetConstDistribution_ungrm", "JetConstDistribution_grm", "hJetMass_vs_pt_ungrm", "hJetMass_vs_pt_ungrm"};
 
-  std::string trkLeg[] = {"0 < N_{trk} < 60", "60 < N_{trk} < 120", "120 < N_{trk}"};
-  std::string ptLeg[] = {"50 < p_{T} < 100 [GeV/c]", "100 < p_{T} < 300 [GeV/c]", " 300 < p_{T} [GeV/c]"};
-  std::string etaLeg[] = {"-2.6 < #eta < -0.4", "-0.4 < #eta < 0.4", "0.4 < #eta < 2.6"};
-  std::string momentsLeg[] = {"1^{st} Moment", "2^{nd} Moment"};
+  std::string centLeg[] = {"0-20%", "20-40%", "40-60%", "60-100%"};
+  std::string ptLeg[] = {"50 < p_{T} < 100 [GeV/c]", "100 < p_{T} < 300 [GeV/c]", "300 < p_{T} < 500 [GeV/c]", " 500 < p_{T} [GeV/c]"};
+  std::string etaLeg[] = {"-3.5 < #eta < -2.0", "-2.0 < #eta < -0.5", "-0.5 < #eta < 0.5", "0.5 < #eta < 2.0", "2.0 < #eta < 3.5"};
+  std::string momentsLeg[] = {"0.5^{th} Moment", "1^{st} Moment", "2^{nd} Moment", "3^{rd} Moment"};
 
   std::string radius = {"R = 0.4"};
   std::string jetdes[] = {"anti k_{T} PF Jets",  "anti k_{T} groomed PF Jets"};  
   
-  for(int w = 0; w < _ntrkbins; ++w){
+  for(int w = 0; w < _ncentbins; ++w){
     for(int x = 0; x < _nptbins; ++x){
       for(int y = 0; y < _netabins; ++y){
 	// for(int v = 0; v < 7; ++v){
 	//   if(v < 3){
-	//     hPY6B1D[w][x][y] = (TH1F*)fPY6->Get(Form("h%s_%s_%s_%s", histoTypeB[v].c_str(), trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
+	//     hPY6B1D[w][x][y] = (TH1F*)fPY6->Get(Form("h%s_%s_%s_%s", histoTypeB[v].c_str(), centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
 	//   }
 	//   else{
-	//     hPY6B2D[v-1][w][x][y] = (TH2F*)fPY6->Get(Form("h%s_%s_%s_%s", histoTypeB[v].c_str(), trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
+	//     hPY6B2D[v-1][w][x][y] = (TH2F*)fPY6->Get(Form("h%s_%s_%s_%s", histoTypeB[v].c_str(), centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
 	//   }
 	// }
 	// for(int v = 0; v < 8; ++v){
 	//   for(int z = 0; z < _nbeta; ++z){
 	//     if(v < 4){
-	//       hPY6A1D[v][w][x][y][z] = (TH1F*)fPY6->Get(Form("h%s_%s_%s_%s_%s", histoTypeA[v].c_str(), trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
+	//       hPY6A1D[v][w][x][y][z] = (TH1F*)fPY6->Get(Form("h%s_%s_%s_%s_%s", histoTypeA[v].c_str(), centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
 	//       hPY6A1D[v][w][x][y][z]->Rebin(4);
 	//     // divideBinWidth(hPY6[v][w][x][y][z]);
 	//     }else {
-	//       hPY6A2D[v][w][x][y][z] = (TH2F*)fPY6->Get(Form("h%s_%s_%s_%s_%s", histoTypeA[v].c_str(), trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
+	//       hPY6A2D[v][w][x][y][z] = (TH2F*)fPY6->Get(Form("h%s_%s_%s_%s_%s", histoTypeA[v].c_str(), centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
 	//     }
 	//   }	
 	// }
-	hData_GroomEffect[w][x][y] = (TH1F*)fData->Get(Form("hJetGroomEffect_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
+	hData_GroomEffect[w][x][y] = (TH1F*)fData->Get(Form("hJetGroomEffect_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
 	hData_GroomEffect[w][x][y]->Print("base");
 	// hData_GroomEffect[w][x][y]->Rebin(nRebin);
 	// divideBinWidth(hData_GroomEffect[w][x][y]);
 	if(hData_GroomEffect[w][x][y]->GetEntries()>0)
 	  hData_GroomEffect[w][x][y]->Scale(1./hData_GroomEffect[w][x][y]->Integral());
-	hData_Mass_grm[w][x][y] = (TH1F*)fData->Get(Form("hJetMass_grm_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
+	hData_Mass_grm[w][x][y] = (TH1F*)fData->Get(Form("hJetMass_grm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
 	hData_Mass_grm[w][x][y]->Print("base");
 	// hData_Mass_grm[w][x][y]->Rebin(nRebin);
 	// divideBinWidth(hData_Mass_grm[w][x][y]);
 	if(hData_Mass_grm[w][x][y]->GetEntries()>0)
 	  hData_Mass_grm[w][x][y]->Scale(1./hData_Mass_grm[w][x][y]->Integral());
-	hData_Mass_ungrm[w][x][y] = (TH1F*)fData->Get(Form("hJetMass_ungrm_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));	
+	hData_Mass_ungrm[w][x][y] = (TH1F*)fData->Get(Form("hJetMass_ungrm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));	
 	hData_Mass_ungrm[w][x][y]->Print("base");
 	// hData_Mass_ungrm[w][x][y]->Rebin(nRebin);
 	// divideBinWidth(hData_Mass_ungrm[w][x][y]);
 	if(hData_Mass_ungrm[w][x][y]->GetEntries()>0)
 	  hData_Mass_ungrm[w][x][y]->Scale(1./hData_Mass_ungrm[w][x][y]->Integral());
 	
-	hPY6_GroomEffect[w][x][y] = (TH1F*)fPY6->Get(Form("hJetGroomEffect_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
-	hPY6_GroomEffect[w][x][y]->Print("base");
+	// hPY6_GroomEffect[w][x][y] = (TH1F*)fPY6->Get(Form("hJetGroomEffect_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
+	// hPY6_GroomEffect[w][x][y]->Print("base");
 	// hPY6_GroomEffect[w][x][y]->Rebin(nRebin);
 	// divideBinWidth(hPY6_GroomEffect[w][x][y]);
-	// hPY6_Mass_grm[w][x][y] = (TH1F*)fPY6->Get(Form("hJetMass_grm_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
+	// hPY6_Mass_grm[w][x][y] = (TH1F*)fPY6->Get(Form("hJetMass_grm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));
 	// hPY6_Mass_grm[w][x][y]->Print("base");
 	// hPY6_Mass_grm[w][x][y]->Rebin(nRebin);
 	// divideBinWidth(hPY6_Mass_grm[w][x][y]);
-	// hPY6_Mass_ungrm[w][x][y] = (TH1F*)fPY6->Get(Form("hJetMass_ungrm_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));	
+	// hPY6_Mass_ungrm[w][x][y] = (TH1F*)fPY6->Get(Form("hJetMass_ungrm_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str()));	
         // hPY6_Mass_ungrm[w][x][y]->Print("base");
 	for(int z = 0; z < _nbeta; ++z){
-	  cout<<Form("hJetConst_grm_%s_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str())<<endl;
-	  hData_Moment_grm[w][x][y][z] = (TH1F*)fData->Get(Form("hJetConst_grm_%s_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
+	  cout<<Form("hJetConst_grm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str())<<endl;
+	  hData_Moment_grm[w][x][y][z] = (TH1F*)fData->Get(Form("hJetConst_grm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
 	  // hData_Moment_grm[w][x][y][z]->Print("base");
 	  // hData_Moment_grm[w][x][y][z]->Rebin(nRebin);
 	  divideBinWidth(hData_Moment_grm[w][x][y][z]);
 	  if(hData_Moment_grm[w][x][y][z]->GetEntries()>0)
 	    hData_Moment_grm[w][x][y][z]->Scale(1./hData_Moment_grm[w][x][y][z]->Integral());
-	  hData_Moment_ungrm[w][x][y][z] = (TH1F*)fData->Get(Form("hJetConst_ungrm_%s_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
+	  hData_Moment_ungrm[w][x][y][z] = (TH1F*)fData->Get(Form("hJetConst_ungrm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
 	  hData_Moment_ungrm[w][x][y][z]->Print("base");
 	  // hData_Moment_ungrm[w][x][y][z]->Rebin(nRebin);
 	  // divideBinWidth(hData_Moment_ungrm[w][x][y][z]);
 	  if(hData_Moment_ungrm[w][x][y][z]->GetEntries()>0)
 	    hData_Moment_ungrm[w][x][y][z]->Scale(1./hData_Moment_ungrm[w][x][y][z]->Integral());
-	  hPY6_Moment_grm[w][x][y][z] = (TH1F*)fPY6->Get(Form("hJetConst_grm_%s_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
-	  hPY6_Moment_grm[w][x][y][z]->Print("base");
+	  // hPY6_Moment_grm[w][x][y][z] = (TH1F*)fPY6->Get(Form("hJetConst_grm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
+	  // hPY6_Moment_grm[w][x][y][z]->Print("base");
 	  // hPY6_Moment_grm[w][x][y][z]->Rebin(nRebin);
 	  // divideBinWidth(hPY6_Moment_grm[w][x][y][z]);
-	  hPY6_Moment_ungrm[w][x][y][z] = (TH1F*)fPY6->Get(Form("hJetConst_ungrm_%s_%s_%s_%s", trkbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
-	  hPY6_Moment_ungrm[w][x][y][z]->Print("base");
+	  // hPY6_Moment_ungrm[w][x][y][z] = (TH1F*)fPY6->Get(Form("hJetConst_ungrm_%s_%s_%s_%s", centbins[w].c_str(), ptbins[x].c_str(), etabins[y].c_str(), moments[z].c_str()));
+	  // hPY6_Moment_ungrm[w][x][y][z]->Print("base");
 	  // hPY6_Moment_ungrm[w][x][y][z]->Rebin(nRebin);
 	  // divideBinWidth(hPY6_Moment_ungrm[w][x][y][z]);
 	}
@@ -155,19 +158,14 @@ void paperPlots()
   TLegend * legComb = myLegend(0.35, 0.6, 0.9, 0.9);
 
   for(int z = 0; z < _nbeta; ++z){
-    cMoments_grm[z] = new TCanvas(Form("%s_grm", moments[z].c_str()),"",400.*_ntrkbins, 400.*_nptbins);
-    makeMultiPanelCanvas(cMoments_grm[z], _ntrkbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
+    cMoments_grm[z] = new TCanvas(Form("%s_grm", moments[z].c_str()),"",400.*_ncentbins, 400.*_nptbins);
+    makeMultiPanelCanvas(cMoments_grm[z], _ncentbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
     hDummyMoment[z]= new TH1F(Form("hDummyMoment_%s", moments[z].c_str()),"",100, 0, 1);
     hDummyMoment[z]->SetTitle("");
     hDummyMoment[z]->SetYTitle("1/N^{jets} dN/drm");
     hDummyMoment[z]->SetXTitle(Form("%s", momentsLeg[z].c_str()));
-    if(z == 0){
-      hDummyMoment[z]->SetAxisRange(0.0001, 0.2999, "X");
-      hDummyMoment[z]->SetAxisRange(0, 0.15, "y");
-    }else{
-      hDummyMoment[z]->SetAxisRange(0.0001, 0.0999, "X");
-      hDummyMoment[z]->SetAxisRange(0, 0.3, "y");
-    }
+    hDummyMoment[z]->SetAxisRange(0.0001, 0.6, "X");
+    hDummyMoment[z]->SetAxisRange(0.001, 1, "y");
     hDummyMoment[z]->GetXaxis()->SetNdivisions(505);
     hDummyMoment[z]->GetXaxis()->SetLabelFont(43);
     hDummyMoment[z]->GetXaxis()->SetLabelSize(25);
@@ -184,12 +182,13 @@ void paperPlots()
     hDummyMoment[z]->GetYaxis()->SetTitleFont(43);
     int padCounter = 1;
     for(int x = 0; x < _nptbins; ++x){
-      for(int w = 0; w < _ntrkbins; ++w){
+      for(int w = 0; w < _ncentbins; ++w){
 	cMoments_grm[z]->cd(padCounter);
 	gPad->SetTickx();
 	gPad->SetTicky();
 	gStyle->SetErrorX(0);
-	//cMoments[z]->cd(padCounter)->SetLogy();
+	cMoments_grm[z]->cd(padCounter)->SetLogy();
+	cMoments_grm[z]->cd(padCounter)->SetLogx();
 	hDummyMoment[z]->Draw();
 	if(z == 0 && padCounter == 1){
 	  legMC->AddEntry("","","");
@@ -197,25 +196,25 @@ void paperPlots()
 	  legComb->AddEntry("", "", "");
 	}
 	for(int y = 0; y < _netabins; ++y){
-	  hPY6_Moment_grm[w][x][y][z]->SetLineStyle(2);
-	  hPY6_Moment_grm[w][x][y][z]->SetLineWidth(1);
-	  hPY6_Moment_grm[w][x][y][z]->SetLineColor(color[y]);
-	  hPY6_Moment_grm[w][x][y][z]->Draw("same l");
+	  // hPY6_Moment_grm[w][x][y][z]->SetLineStyle(2);
+	  // hPY6_Moment_grm[w][x][y][z]->SetLineWidth(1);
+	  // hPY6_Moment_grm[w][x][y][z]->SetLineColor(color[y]);
+	  // hPY6_Moment_grm[w][x][y][z]->Draw("same l");
 	  hData_Moment_grm[w][x][y][z]->SetMarkerStyle(33);
 	  hData_Moment_grm[w][x][y][z]->SetMarkerSize(1.1);
 	  hData_Moment_grm[w][x][y][z]->SetMarkerColor(color[y]);
 	  hData_Moment_grm[w][x][y][z]->Draw("same p");
 	  if(z == 0 && padCounter == 1){
-	    legMC->AddEntry(hPY6_Moment_grm[w][x][y][z], "", "l");
+	    // legMC->AddEntry(hPY6_Moment_grm[w][x][y][z], "", "l");
 	    legData->AddEntry(hData_Moment_grm[w][x][y][z], "", "p");
 	    legComb->AddEntry("",Form("%s",etaLeg[y].c_str()), "");
 	  }
 	}
-	if(padCounter <= _ntrkbins)
-	  drawText(Form("%s",trkLeg[w].c_str()), 0.4, 0.8, 16);
-	if(padCounter%_ntrkbins == 1)
+	if(padCounter <= _ncentbins)
+	  drawText(Form("%s",centLeg[w].c_str()), 0.4, 0.8, 16);
+	if(padCounter%_ncentbins == 1)
 	  drawText(Form("%s",ptLeg[x].c_str()), 0.4, 0.7, 16);
-	if(padCounter == _ntrkbins){
+	if(padCounter == _ncentbins){
 	  drawText("pPb (8.16 TeV)", 0.6, 0.95, 16);
 	  drawText(Form("%s",jetdes[1].c_str()),0.1, 0.7, 16);
 	  drawText(Form("%s",radius.c_str()), 0.3, 0.6, 16);
@@ -225,44 +224,45 @@ void paperPlots()
 	padCounter++;
       }
     }
-    legMC->SetTextSize(0.04);
-    legMC->Draw();
+    // legMC->SetTextSize(0.04);
+    // legMC->Draw();
     legData->SetTextSize(0.04);
     legData->Draw();
     legComb->SetTextSize(0.04);
     legComb->Draw();
-    drawText("PY6", 0.2, 0.8, 16);
+    // drawText("PY6", 0.2, 0.8, 16);
     drawText("Data", 0.3, 0.8, 16);
-    cMoments_grm[z]->SaveAs(Form("plots/DatavsPY6_Grm_RadMom_%s.pdf", moments[z].c_str()),"RECREATE");
+    cMoments_grm[z]->SaveAs(Form("plots/Data_Grm_RadMom_%s.pdf", moments[z].c_str()),"RECREATE");
   }
 
   for(int z = 0; z < _nbeta; ++z){
-    cMoments_ungrm[z] = new TCanvas(Form("%s_ungrm", moments[z].c_str()),"",400.*_ntrkbins, 400.*_nptbins);
-    makeMultiPanelCanvas(cMoments_ungrm[z], _ntrkbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
+    cMoments_ungrm[z] = new TCanvas(Form("%s_ungrm", moments[z].c_str()),"",400.*_ncentbins, 400.*_nptbins);
+    makeMultiPanelCanvas(cMoments_ungrm[z], _ncentbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
     int padCounter = 1;
     for(int x = 0; x < _nptbins; ++x){
-      for(int w = 0; w < _ntrkbins; ++w){
+      for(int w = 0; w < _ncentbins; ++w){
 	cMoments_ungrm[z]->cd(padCounter);
 	gPad->SetTickx();
 	gPad->SetTicky();
 	gStyle->SetErrorX(0);
-	//cMoments[z]->cd(padCounter)->SetLogy();
+	cMoments_ungrm[z]->cd(padCounter)->SetLogy();
+	cMoments_ungrm[z]->cd(padCounter)->SetLogx();
 	hDummyMoment[z]->Draw();
 	for(int y = 0; y < _netabins; ++y){
-	  hPY6_Moment_ungrm[w][x][y][z]->SetLineStyle(2);
-	  hPY6_Moment_ungrm[w][x][y][z]->SetLineWidth(1);
-	  hPY6_Moment_ungrm[w][x][y][z]->SetLineColor(color[y]);
-	  hPY6_Moment_ungrm[w][x][y][z]->Draw("same l");
+	  // hPY6_Moment_ungrm[w][x][y][z]->SetLineStyle(2);
+	  // hPY6_Moment_ungrm[w][x][y][z]->SetLineWidth(1);
+	  // hPY6_Moment_ungrm[w][x][y][z]->SetLineColor(color[y]);
+	  // hPY6_Moment_ungrm[w][x][y][z]->Draw("same l");
 	  hData_Moment_ungrm[w][x][y][z]->SetMarkerStyle(33);
 	  hData_Moment_ungrm[w][x][y][z]->SetMarkerSize(1.1);
 	  hData_Moment_ungrm[w][x][y][z]->SetMarkerColor(color[y]);
 	  hData_Moment_ungrm[w][x][y][z]->Draw("same p");
 	}
-	if(padCounter <= _ntrkbins)
-	  drawText(Form("%s",trkLeg[w].c_str()), 0.4, 0.8, 16);
-	if(padCounter%_ntrkbins == 1)
+	if(padCounter <= _ncentbins)
+	  drawText(Form("%s",centLeg[w].c_str()), 0.4, 0.8, 16);
+	if(padCounter%_ncentbins == 1)
 	  drawText(Form("%s",ptLeg[x].c_str()), 0.4, 0.7, 16);
-	if(padCounter == _ntrkbins){
+	if(padCounter == _ncentbins){
 	  drawText("pPb (8.16 TeV)", 0.6, 0.95, 16);
 	  drawText(Form("%s",jetdes[0].c_str()),0.1, 0.7, 16);
 	  drawText(Form("%s",radius.c_str()), 0.3, 0.6, 16);
@@ -272,10 +272,10 @@ void paperPlots()
 	padCounter++;
       }
     }
-    legMC->Draw();
+    // legMC->Draw();
     legData->Draw();
     legComb->Draw();
-    cMoments_ungrm[z]->SaveAs(Form("plots/DatavsPY6_unGrm_RadMom_%s.pdf", moments[z].c_str()),"RECREATE");
+    cMoments_ungrm[z]->SaveAs(Form("plots/Data_unGrm_RadMom_%s.pdf", moments[z].c_str()),"RECREATE");
   }
 
   
@@ -287,8 +287,8 @@ void paperPlots()
   std::string xtitle[] = {"p^{grm jet}_{T}/p^{jet}_{T}", "r from jet axis", "r from jet axis"};
   std::string ytitle[] = {"1/N_{jets} dN/d(p^{grm jet}_{T}/p^{jet}_{T})", "p^{constituent}_{T}/p^{jet}_{T}", "p^{constituent}_{T}/p^{grm jet}_{T}"};
   
-  cGroomEffect = new TCanvas("cgroomEffect","",400.*_ntrkbins, 400.*_nptbins);
-  makeMultiPanelCanvas(cGroomEffect, _ntrkbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
+  cGroomEffect = new TCanvas("cgroomEffect","",400.*_ncentbins, 400.*_nptbins);
+  makeMultiPanelCanvas(cGroomEffect, _ncentbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
   hDummy_GroomEffect= new TH1F("hDummy_GroomEffect","",100, 0, 1);
   hDummy_GroomEffect->SetTitle("");
   hDummy_GroomEffect->SetYTitle(Form("%s",ytitle[0].c_str()));
@@ -312,49 +312,49 @@ void paperPlots()
     
   int padCounter = 1;
   for(int x = 0; x < _nptbins; ++x){
-    for(int w = 0; w < _ntrkbins; ++w){
+    for(int w = 0; w < _ncentbins; ++w){
       cGroomEffect->cd(padCounter);
       gPad->SetTickx();
       gPad->SetTicky();
       gStyle->SetErrorX(0);
       cGroomEffect->cd(padCounter)->SetLogy();
+      cGroomEffect->cd(padCounter)->SetLogx();
       hDummy_GroomEffect->Draw();
       for(int y = 0; y < _netabins; ++y){
-	hPY6_GroomEffect[w][x][y]->SetLineStyle(2);
-	hPY6_GroomEffect[w][x][y]->SetLineWidth(2);
-	hPY6_GroomEffect[w][x][y]->SetLineColor(color[y]);
-	hPY6_GroomEffect[w][x][y]->Draw("same l");
+	// hPY6_GroomEffect[w][x][y]->SetLineStyle(2);
+	// hPY6_GroomEffect[w][x][y]->SetLineWidth(2);
+	// hPY6_GroomEffect[w][x][y]->SetLineColor(color[y]);
+	// hPY6_GroomEffect[w][x][y]->Draw("same l");
 	hData_GroomEffect[w][x][y]->SetMarkerStyle(20);
 	hData_GroomEffect[w][x][y]->SetMarkerSize(1.1);
 	hData_GroomEffect[w][x][y]->SetMarkerColor(color[y]);
 	hData_GroomEffect[w][x][y]->Draw("same p");
       }
-      if(padCounter <= _ntrkbins)
-	drawText(Form("%s",trkLeg[w].c_str()), 0.4, 0.8, 16);
-      if(padCounter%_ntrkbins == 1)
+      if(padCounter <= _ncentbins)
+	drawText(Form("%s",centLeg[w].c_str()), 0.4, 0.8, 16);
+      if(padCounter%_ncentbins == 1)
 	drawText(Form("%s",ptLeg[x].c_str()), 0.3, 0.25, 16);
-      if(padCounter == _ntrkbins){
+      if(padCounter == _ncentbins){
 	drawText("(8.16 TeV)", 0.6, 0.95, 16);
 	drawText(Form("%s",jetdes[0].c_str()),0.1, 0.7, 16);
 	drawText(Form("%s",radius.c_str()), 0.3, 0.6, 16);
       }
-      if(x == 0 && w == 0)
-	drawText("CMS Simulation", 0.3, 0.95, 16);
+      // if(x == 0 && w == 0)
+      // 	drawText("CMS Simulation", 0.3, 0.95, 16);
       padCounter++;
     }
   }
-  legMC->Draw();
+  // legMC->Draw();
   legData->Draw();
   legComb->Draw();
-  cGroomEffect->SaveAs("plots/DataPY6_GroomEffect.pdf", "RECREATE");
-
+  cGroomEffect->SaveAs("plots/Data_GroomEffect.pdf", "RECREATE");
 
 
   //! prepare the canvas!
   TCanvas * cMass_grm;  
   TH1F * hDummy_Mass_grm;    
-  cMass_grm = new TCanvas("cMass_grm","",400.*_ntrkbins, 400.*_nptbins);
-  makeMultiPanelCanvas(cMass_grm, _ntrkbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
+  cMass_grm = new TCanvas("cMass_grm","",400.*_ncentbins, 400.*_nptbins);
+  makeMultiPanelCanvas(cMass_grm, _ncentbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
   hDummy_Mass_grm= new TH1F("hDummy_Mass_grm","",100, 0, 50);
   hDummy_Mass_grm->SetTitle("");
   hDummy_Mass_grm->SetXTitle("SD Groomed Jet Mass m_{J} [GeV/c^2]");
@@ -378,12 +378,13 @@ void paperPlots()
     
   padCounter = 1;
   for(int x = 0; x < _nptbins; ++x){
-    for(int w = 0; w < _ntrkbins; ++w){
+    for(int w = 0; w < _ncentbins; ++w){
       cMass_grm->cd(padCounter);
       gPad->SetTickx();
       gPad->SetTicky();
       gStyle->SetErrorX(0);
-      // cMass_grm->cd(padCounter)->SetLogy();
+      cMass_grm->cd(padCounter)->SetLogy();
+      cMass_grm->cd(padCounter)->SetLogx();
       hDummy_Mass_grm->Draw();
       for(int y = 0; y < _netabins; ++y){
 	// hPY6_Mass_grm[w][x][y]->SetLineStyle(2);
@@ -395,31 +396,31 @@ void paperPlots()
 	hData_Mass_grm[w][x][y]->SetMarkerColor(color[y]);
 	hData_Mass_grm[w][x][y]->Draw("same p");
       }
-      if(padCounter <= _ntrkbins)
-	drawText(Form("%s",trkLeg[w].c_str()), 0.4, 0.8, 16);
-      if(padCounter%_ntrkbins == 1)
+      if(padCounter <= _ncentbins)
+	drawText(Form("%s",centLeg[w].c_str()), 0.4, 0.8, 16);
+      if(padCounter%_ncentbins == 1)
 	drawText(Form("%s",ptLeg[x].c_str()), 0.3, 0.25, 16);
-      if(padCounter == _ntrkbins){
+      if(padCounter == _ncentbins){
 	drawText("(8.16 TeV)", 0.6, 0.95, 16);
 	drawText(Form("%s",jetdes[0].c_str()),0.1, 0.7, 16);
 	drawText(Form("%s",radius.c_str()), 0.3, 0.6, 16);
       }
       if(x == 0 && w == 0)
-	drawText("CMS Simulation", 0.3, 0.95, 16);
+	drawText("CMS Preliminary", 0.3, 0.95, 16);
       padCounter++;
     }
   }
   legMC->Draw();
   legData->Draw();
   legComb->Draw();
-  cMass_grm->SaveAs("plots/DatavsPY6_Mass_grm.pdf", "RECREATE");
+  cMass_grm->SaveAs("plots/Data_Mass_grm.pdf", "RECREATE");
 
   
   //! prepare the canvas!
   TCanvas * cMass_ungrm;  
   TH1F * hDummy_Mass_ungrm;    
-  cMass_ungrm = new TCanvas("cMass_ungrm","",400.*_ntrkbins, 400.*_nptbins);
-  makeMultiPanelCanvas(cMass_ungrm, _ntrkbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
+  cMass_ungrm = new TCanvas("cMass_ungrm","",400.*_ncentbins, 400.*_nptbins);
+  makeMultiPanelCanvas(cMass_ungrm, _ncentbins, _nptbins, 0.2, 0.2, 0.2, 0.2, 0.08);
   hDummy_Mass_ungrm= new TH1F("hDummy_Mass_ungrm","",100, 0, 50);
   hDummy_Mass_ungrm->SetTitle("");
   hDummy_Mass_ungrm->SetXTitle("Jet Mass m_{J} [GeV/c^2]");
@@ -443,12 +444,13 @@ void paperPlots()
     
   padCounter = 1;
   for(int x = 0; x < _nptbins; ++x){
-    for(int w = 0; w < _ntrkbins; ++w){
+    for(int w = 0; w < _ncentbins; ++w){
       cMass_ungrm->cd(padCounter);
       gPad->SetTickx();
       gPad->SetTicky();
       gStyle->SetErrorX(0);
-      // cMass_ungrm->cd(padCounter)->SetLogy();
+      cMass_ungrm->cd(padCounter)->SetLogy();
+      cMass_ungrm->cd(padCounter)->SetLogx();
       hDummy_Mass_ungrm->Draw();
       for(int y = 0; y < _netabins; ++y){
 	// hPY6_Mass_ungrm[w][x][y]->SetLineStyle(2);
@@ -460,25 +462,24 @@ void paperPlots()
 	hData_Mass_ungrm[w][x][y]->SetMarkerColor(color[y]);
 	hData_Mass_ungrm[w][x][y]->Draw("same p");
       }
-      if(padCounter <= _ntrkbins)
-	drawText(Form("%s",trkLeg[w].c_str()), 0.4, 0.8, 16);
-      if(padCounter%_ntrkbins == 1)
+      if(padCounter <= _ncentbins)
+	drawText(Form("%s",centLeg[w].c_str()), 0.4, 0.8, 16);
+      if(padCounter%_ncentbins == 1)
 	drawText(Form("%s",ptLeg[x].c_str()), 0.3, 0.25, 16);
-      if(padCounter == _ntrkbins){
+      if(padCounter == _ncentbins){
 	drawText("(8.16 TeV)", 0.6, 0.95, 16);
 	drawText(Form("%s",jetdes[0].c_str()),0.1, 0.7, 16);
 	drawText(Form("%s",radius.c_str()), 0.3, 0.6, 16);
       }
       if(x == 0 && w == 0)
-	drawText("CMS Simulation", 0.3, 0.95, 16);
+	drawText("CMS Preliminary", 0.3, 0.95, 16);
       padCounter++;
     }
   }
   legMC->Draw();
   legData->Draw();
   legComb->Draw();
-  cMass_ungrm->SaveAs("plots/DatavsPY6_Mass_ungrm.pdf", "RECREATE");
-
+  cMass_ungrm->SaveAs("plots/Data_Mass_ungrm.pdf", "RECREATE");
 
 
   
